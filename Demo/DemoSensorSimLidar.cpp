@@ -1,9 +1,9 @@
 //-----------------------------------------------------------------------------
-// DemoPresentation.cpp
+// DemoSensorSimLidar.cpp
 //
-// Copyright (c) 2013-2016 Joep Suijs - All rights reserved.        
+// Copyright (c) 2013-2017 Joep Suijs - All rights reserved.        
 //
-// This demo shows how to use the Presentation class.
+// This demo shows how to use SensorSimLidar.
 //
 // RobotLib tags: DEMO
 //-----------------------------------------------------------------------------
@@ -31,28 +31,19 @@
 //-----------------------------------------------------------------------------
 // tags_end
 //----------------------------------------------------------------------------- 
- 
 
-#define DEMO_NAME DemoPresentation
+#define DEMO_NAME DemoSensorSimLidar
 
 //-------------
 // OVERVIEW
 //-------------
-/*     
-   The presentation class provides information on the
-   status of the robot for presentation. By default it
-   provides the robot position (x, y and degrees).
-   Additional data can be added. 
+/*      
+The SensorSimLidar provides virtual sensor input. 
+See DemoSensorSimulator for more details on the simulator. The focus of
+this demo is on the use of the LIDAR type of sensor.
 
-   The format of the data is: 
-   [DATA] P_x:4 P_y:0 Hd:0 [/DATA]
-
-   The data is sent to the console port.
-   
-   When the data is sent, is controlled by mode:
-      0 - Off  (do not print)
-      1 - Auto (print when the robot has moved)
-      2 - On   (print at fixed interval)        
+Note: make sure "#define USE_RPLIDAR_SIM" is somewhere at the top of Prj_RobotLib_conf.h
+is in the
 */
 
 //-------------
@@ -61,9 +52,8 @@
  
 //-------------
 // INSTANCES 
-//-------------
-static int Test0;
-static int Test1;
+//-------------                 
+TRpLidarSim RpLidar; 
 
 //-----------------------------------------------------------------------------            
 // DefaultDemoSetup - 
@@ -71,23 +61,21 @@ static int Test1;
 //-----------------------------------------------------------------------------            
 void DefaultDemoSetup()
 {       
-   printf("DemoSetup for Presentation.\n");  
-   
-   // give test vars a distinctive value
-   Test0 = 12345;
-   Test1 = 98765;
-   
-   // Add tag 'dm' to provide Test0 data. 
-   Presentation.Add("dm", Test0); 
-   
-   // Show only data when robot moves.
-   Presentation.Mode = 1;
-   
-   // Show data once every 100ms                                   
-   Presentation.Interval.SetMs(100);
-                                         
-   // Show configuration
-   Presentation.Dump();   
+   printf("DemoSetup for SensorSimLidar.\n");    
+
+   // load the roborama track  + 3 crosses (as soda cans)
+   SimulatorTrack.AddRoboRama();     
+   SimulatorTrack.AddCross(1200, 600, 70);
+   SimulatorTrack.AddCross(1800, 600, 70);
+   SimulatorTrack.AddCross(3000, 600, 70);
+     
+   // Dump track point at group 2 (can be used by RobotPresenter)
+//   SimulatorTrack.DumpPoints(2);      
+
+   // Register simulated sensor task. 
+   MainTasks.Add(FP_FNAME(RpLidar));
+ 
+   CliAddCommands(CliLidar, "RpLidarSim");      
 }
 
 //----------------------------------------------------------------------------- 
@@ -96,31 +84,8 @@ void DefaultDemoSetup()
 //-----------------------------------------------------------------------------            
 void CliCmd_DefaultDemo(int NrParams, TCiParams *P)
 {  
-   printf("Demo command for Presentation.\n");
-
-   if (NrParams == 0) {  
-      printf("Demo <n> (n=0..2) changes dm setup\n");
-      Presentation.Dump();
-      return;   
-   }
-
-   switch(P[0].PInt) { 
-      case 0 : {              
-         printf("Delete dm tag\n");
-         Presentation.Delete("dm");
-         break;
-      }
-      case 1 : {
-         printf("Set dm tag to Test0 (12345)\n");
-         Presentation.Add("dm", Test0);
-         break;
-      }
-      case 2 : {
-         printf("Set dm tag to Test1 (98765)\n");
-         Presentation.Add("dm", Test1);
-         break;
-      }
-   }
+   printf("Demo command for SensorSimLidar.\n"); 
+   printf("Use lidar commands to see output\n");   
 }   
 
 //-------------

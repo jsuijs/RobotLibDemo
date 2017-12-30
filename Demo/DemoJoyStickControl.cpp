@@ -1,9 +1,9 @@
 //-----------------------------------------------------------------------------
-// DemoPresentation.cpp
+// DemoJoyStickControl.cpp
 //
-// Copyright (c) 2013-2016 Joep Suijs - All rights reserved.        
+// Copyright (c) 2013-2017 Joep Suijs - All rights reserved.        
 //
-// This demo shows how to use the Presentation class.
+// This demo shows how to use JoyStickControl.
 //
 // RobotLib tags: DEMO
 //-----------------------------------------------------------------------------
@@ -31,39 +31,33 @@
 //-----------------------------------------------------------------------------
 // tags_end
 //----------------------------------------------------------------------------- 
- 
 
-#define DEMO_NAME DemoPresentation
+#define DEMO_NAME DemoJoyStickControl
 
 //-------------
 // OVERVIEW
 //-------------
-/*     
-   The presentation class provides information on the
-   status of the robot for presentation. By default it
-   provides the robot position (x, y and degrees).
-   Additional data can be added. 
+/*                                     
+   JoyStickControl are remote controls with a JoyStick (...) in contrast with
+   'Normal' remote controls, which provide input from buttons (generally,
+   via infra-red'
 
-   The format of the data is: 
-   [DATA] P_x:4 P_y:0 Hd:0 [/DATA]
-
-   The data is sent to the console port.
-   
-   When the data is sent, is controlled by mode:
-      0 - Off  (do not print)
-      1 - Auto (print when the robot has moved)
-      2 - On   (print at fixed interval)        
+   This demo show how to use a JoyStickControl input to drive a robot like
+   an RC car. In this case, the PPM JoyStickControl is used, which reads
+   an i2c slave which decodes the PPM RC signal. 
 */
 
 //-------------
 // DECLARATIONS 
 //-------------
+extern TJscPpm JoyStickControl;      
+void JscDemoTakt();              // only for this demo...
+
  
 //-------------
 // INSTANCES 
 //-------------
-static int Test0;
-static int Test1;
+TJscPpm JoyStickControl;
 
 //-----------------------------------------------------------------------------            
 // DefaultDemoSetup - 
@@ -71,23 +65,14 @@ static int Test1;
 //-----------------------------------------------------------------------------            
 void DefaultDemoSetup()
 {       
-   printf("DemoSetup for Presentation.\n");  
+   printf("DemoSetup for JoyStickControl.\n"); 
    
-   // give test vars a distinctive value
-   Test0 = 12345;
-   Test1 = 98765;
+   // Add JoyStickController to tasklist
+   MainTasks.Add(FP_FNAME(JoyStickControl));
+
+   // For the demo only, add DemoTask too
+   MainTasks.Add(FP_FNAME(JscDemoTakt));
    
-   // Add tag 'dm' to provide Test0 data. 
-   Presentation.Add("dm", Test0); 
-   
-   // Show only data when robot moves.
-   Presentation.Mode = 1;
-   
-   // Show data once every 100ms                                   
-   Presentation.Interval.SetMs(100);
-                                         
-   // Show configuration
-   Presentation.Dump();   
 }
 
 //----------------------------------------------------------------------------- 
@@ -96,33 +81,26 @@ void DefaultDemoSetup()
 //-----------------------------------------------------------------------------            
 void CliCmd_DefaultDemo(int NrParams, TCiParams *P)
 {  
-   printf("Demo command for Presentation.\n");
-
-   if (NrParams == 0) {  
-      printf("Demo <n> (n=0..2) changes dm setup\n");
-      Presentation.Dump();
-      return;   
-   }
-
-   switch(P[0].PInt) { 
-      case 0 : {              
-         printf("Delete dm tag\n");
-         Presentation.Delete("dm");
-         break;
-      }
-      case 1 : {
-         printf("Set dm tag to Test0 (12345)\n");
-         Presentation.Add("dm", Test0);
-         break;
-      }
-      case 2 : {
-         printf("Set dm tag to Test1 (98765)\n");
-         Presentation.Add("dm", Test1);
-         break;
-      }
-   }
+   printf("Demo command for JoyStickControl.\n");
+   JoyStickControl.Dump();
 }   
 
 //-------------
 // OTHER CODE 
 //-------------
+void JscDemoTakt()
+{  static bool InControl = false; // flag to end control properly.
+   
+   if ((JoyStickControl.Valid) && (JoyStickControl.Aux2 > 60)) {
+      // Valid input & flip Switch SWC ON -> run robot                                                   
+      UmSpeedRotationUpdate(!InControl, 5 * (JoyStickControl.LeftY - 120), -2 * (JoyStickControl.RightX - 120), UM_SCM_NONE); 
+      InControl = true;        
+   }  else {
+      // No valid input
+      if (InControl) { 
+         // We were running the robot -> stop
+         UmSpeedRotationUpdate(!InControl, 0, 0, UM_SCM_NONE);
+         InControl = false;
+      }
+   }
+}

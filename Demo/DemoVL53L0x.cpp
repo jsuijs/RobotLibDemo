@@ -1,9 +1,9 @@
 //-----------------------------------------------------------------------------
-// DemoPresentation.cpp
+// DemoVL53L0x.cpp
 //
-// Copyright (c) 2013-2016 Joep Suijs - All rights reserved.        
+// Copyright (c) 2013-2017 Joep Suijs - All rights reserved.        
 //
-// This demo shows how to use the Presentation class.
+// This demo shows how to use VL53L0x ToF ranging sensor.
 //
 // RobotLib tags: DEMO
 //-----------------------------------------------------------------------------
@@ -31,63 +31,72 @@
 //-----------------------------------------------------------------------------
 // tags_end
 //----------------------------------------------------------------------------- 
- 
 
-#define DEMO_NAME DemoPresentation
-
+#define DEMO_NAME DemoVL53L0x
+               
 //-------------
 // OVERVIEW
 //-------------
-/*     
-   The presentation class provides information on the
-   status of the robot for presentation. By default it
-   provides the robot position (x, y and degrees).
-   Additional data can be added. 
+/*               
 
-   The format of the data is: 
-   [DATA] P_x:4 P_y:0 Hd:0 [/DATA]
-
-   The data is sent to the console port.
-   
-   When the data is sent, is controlled by mode:
-      0 - Off  (do not print)
-      1 - Auto (print when the robot has moved)
-      2 - On   (print at fixed interval)        
 */
 
 //-------------
 // DECLARATIONS 
 //-------------
+// For access from other source files, add prototypes to project.h like
+extern TVL53L0x   VL53L0x;    // Note: this prototype is also in VL53L0x.h, so you
+                              //       can omit it. However, you need this prototype
+                              //       for any sensor with a different name. 
  
 //-------------
 // INSTANCES 
-//-------------
-static int Test0;
-static int Test1;
+//-------------    
 
+TVL53L0x    VL53L0x("MyVl53l0x", VL53L0X_DEFAULT_I2C_ADDRESS);     // VL53L0x instance with i2c slave address as parameter 
+                        
 //-----------------------------------------------------------------------------            
 // DefaultDemoSetup - 
 //-----------------------------------------------------------------------------            
 //-----------------------------------------------------------------------------            
 void DefaultDemoSetup()
 {       
-   printf("DemoSetup for Presentation.\n");  
+   printf("DemoSetup for VL53L0x ToF ranging sensor.\n");     
    
-   // give test vars a distinctive value
-   Test0 = 12345;
-   Test1 = 98765;
+   // Init sensor. 
+   // If the I2C address is not the default one, this
+   // call also updates the sensor address.  
+   VL53L0x.Init();   
    
-   // Add tag 'dm' to provide Test0 data. 
-   Presentation.Add("dm", Test0); 
-   
-   // Show only data when robot moves.
-   Presentation.Mode = 1;
-   
-   // Show data once every 100ms                                   
-   Presentation.Interval.SetMs(100);
-                                         
-   // Show configuration
-   Presentation.Dump();   
+   //--------------------------------------------
+   // Add sensor to task list.
+   // The sensor is checked every cycle via i2c, so the
+   // main tasklist is recommended. For less delay, you 
+   // could choose the milisecond task list. But this
+   // only makes sense if you also use the data
+   // more than once per maintakt interval.
+   //--------------------------------------------
+   MainTasks.Add(FP_FNAME(VL53L0x));
+
+
+   //--------------------------------------------
+   // Since any VL53L0x has the default address
+   // on startup, you might want to use an
+   // i2c mux like PCA8544A to connect multiple
+   // sensor. SetI2cMux let you specify a i2c
+   // slave address and a single databyte that 
+   // is sent to that address, every time before
+   // the VL53L0x is accessed. I2c address 0 
+   // (defautl) disable this feature.
+   //--------------------------------------------
+   //VL53L0x.SetI2cMux(0xE0, 4+0);  // PCA9544A i2c mux enable + select CH0 
+
+
+   // Optional disable on startup:             
+   //VL53L0x.Enable = false; // default is true,
+
+   // Optional add output to Registry
+   Registry.Add("VL53L0x", VL53L0x.Distance); 
 }
 
 //----------------------------------------------------------------------------- 
@@ -96,31 +105,9 @@ void DefaultDemoSetup()
 //-----------------------------------------------------------------------------            
 void CliCmd_DefaultDemo(int NrParams, TCiParams *P)
 {  
-   printf("Demo command for Presentation.\n");
-
-   if (NrParams == 0) {  
-      printf("Demo <n> (n=0..2) changes dm setup\n");
-      Presentation.Dump();
-      return;   
-   }
-
-   switch(P[0].PInt) { 
-      case 0 : {              
-         printf("Delete dm tag\n");
-         Presentation.Delete("dm");
-         break;
-      }
-      case 1 : {
-         printf("Set dm tag to Test0 (12345)\n");
-         Presentation.Add("dm", Test0);
-         break;
-      }
-      case 2 : {
-         printf("Set dm tag to Test1 (98765)\n");
-         Presentation.Add("dm", Test1);
-         break;
-      }
-   }
+   printf("Demo command for VL53L0x laser ranging sensor.\n");
+   
+   printf("VL53L0x distance: %d mm\n", VL53L0x.Distance);   
 }   
 
 //-------------

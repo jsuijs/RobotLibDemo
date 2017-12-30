@@ -1,9 +1,9 @@
 //-----------------------------------------------------------------------------
-// DemoPresentation.cpp
+// DemoMPU6050.cpp
 //
-// Copyright (c) 2013-2016 Joep Suijs - All rights reserved.        
+// Copyright (c) 2013-2017 Joep Suijs - All rights reserved.        
 //
-// This demo shows how to use the Presentation class.
+// This demo shows how to use MPU6050 IMU unit.     
 //
 // RobotLib tags: DEMO
 //-----------------------------------------------------------------------------
@@ -31,28 +31,20 @@
 //-----------------------------------------------------------------------------
 // tags_end
 //----------------------------------------------------------------------------- 
- 
 
-#define DEMO_NAME DemoPresentation
+#define DEMO_MPU6050
 
 //-------------
 // OVERVIEW
 //-------------
-/*     
-   The presentation class provides information on the
-   status of the robot for presentation. By default it
-   provides the robot position (x, y and degrees).
-   Additional data can be added. 
-
-   The format of the data is: 
-   [DATA] P_x:4 P_y:0 Hd:0 [/DATA]
-
-   The data is sent to the console port.
+/*    
+   MPU6050 has an accelerator + gyro. Reading of those is documented.
+   The unit can also fuse the two signals and stream the result. This is not
+   documented by the supplier, but reverse engineerd. The result is implemented
+   by I2cDevLib (which is now ported to Robotlib). 
+   The stream contains quite some data and, as a result, a load on the i2c bus.
    
-   When the data is sent, is controlled by mode:
-      0 - Off  (do not print)
-      1 - Auto (print when the robot has moved)
-      2 - On   (print at fixed interval)        
+   TMpu6050 is a 'robotlib style' takt class. It is build on the I2cDevLib. 
 */
 
 //-------------
@@ -62,8 +54,7 @@
 //-------------
 // INSTANCES 
 //-------------
-static int Test0;
-static int Test1;
+TMpu6050 MyMpu;
 
 //-----------------------------------------------------------------------------            
 // DefaultDemoSetup - 
@@ -71,23 +62,14 @@ static int Test1;
 //-----------------------------------------------------------------------------            
 void DefaultDemoSetup()
 {       
-   printf("DemoSetup for Presentation.\n");  
-   
-   // give test vars a distinctive value
-   Test0 = 12345;
-   Test1 = 98765;
-   
-   // Add tag 'dm' to provide Test0 data. 
-   Presentation.Add("dm", Test0); 
-   
-   // Show only data when robot moves.
-   Presentation.Mode = 1;
-   
-   // Show data once every 100ms                                   
-   Presentation.Interval.SetMs(100);
-                                         
-   // Show configuration
-   Presentation.Dump();   
+   printf("DemoSetup for MPU6050 IMU unit.\n");
+   printf("NOTE: MPU6050 LIB IS STILL IN ALPHA STATE!\n");
+
+   MyMpu.Init();   
+   MyMpu.mpu.setFullScaleGyroRange(3);  // least sensitive = least likely to clip
+   MyMpu.mpu.setDLPFMode(4);  // 20 Hz bandwidth
+   MyMpu.Enabled = true;
+   MainTasks.Add(FP_FNAME(MyMpu));   
 }
 
 //----------------------------------------------------------------------------- 
@@ -96,33 +78,15 @@ void DefaultDemoSetup()
 //-----------------------------------------------------------------------------            
 void CliCmd_DefaultDemo(int NrParams, TCiParams *P)
 {  
-   printf("Demo command for Presentation.\n");
+   printf("Demo command for MPU6050 IMU unit.\n");
+   // read raw accel/gyro measurements from device 
+         MyMpu.DumpRaw();         
 
-   if (NrParams == 0) {  
-      printf("Demo <n> (n=0..2) changes dm setup\n");
-      Presentation.Dump();
-      return;   
-   }
+   MyMpu.Angle = 0;
 
-   switch(P[0].PInt) { 
-      case 0 : {              
-         printf("Delete dm tag\n");
-         Presentation.Delete("dm");
-         break;
-      }
-      case 1 : {
-         printf("Set dm tag to Test0 (12345)\n");
-         Presentation.Add("dm", Test0);
-         break;
-      }
-      case 2 : {
-         printf("Set dm tag to Test1 (98765)\n");
-         Presentation.Add("dm", Test1);
-         break;
-      }
-   }
 }   
 
 //-------------
 // OTHER CODE 
 //-------------
+

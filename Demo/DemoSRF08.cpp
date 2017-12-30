@@ -1,9 +1,9 @@
 //-----------------------------------------------------------------------------
-// DemoPresentation.cpp
+// DemoSRF08.cpp
 //
 // Copyright (c) 2013-2016 Joep Suijs - All rights reserved.        
 //
-// This demo shows how to use the Presentation class.
+// This demo shows how to use SRF08 i2c ultrasonic sensor.
 //
 // RobotLib tags: DEMO
 //-----------------------------------------------------------------------------
@@ -31,39 +31,34 @@
 //-----------------------------------------------------------------------------
 // tags_end
 //----------------------------------------------------------------------------- 
- 
 
-#define DEMO_NAME DemoPresentation
-
+#define DEMO_NAME DemoSRF08
+               
 //-------------
 // OVERVIEW
 //-------------
-/*     
-   The presentation class provides information on the
-   status of the robot for presentation. By default it
-   provides the robot position (x, y and degrees).
-   Additional data can be added. 
-
-   The format of the data is: 
-   [DATA] P_x:4 P_y:0 Hd:0 [/DATA]
-
-   The data is sent to the console port.
+/*               
+   based on C:\MyRobot\tbot\versie1\ultrasonic.c
+   Specs of sensor: http://www.robot-electronics.co.uk/htm/srf08tech.html 
    
-   When the data is sent, is controlled by mode:
-      0 - Off  (do not print)
-      1 - Auto (print when the robot has moved)
-      2 - On   (print at fixed interval)        
+   * multiple instances can be created, one for each sensor.
+   * there is no sync between instances (yet), so you
+     probably want to enable only one at the time.
+
 */
 
 //-------------
 // DECLARATIONS 
 //-------------
+// For access from other source files, add prototypes to project.h like
+extern TSRF08   SRF08;   
  
 //-------------
 // INSTANCES 
-//-------------
-static int Test0;
-static int Test1;
+//-------------    
+
+TSRF08 SRF08(SRF08_DEFAULT_I2C_ADDRESS);  // SRF08 instance with i2c slave address as parameter 
+                                          // (Address range 0xE0..0xFE, see sensor doc's for details).
 
 //-----------------------------------------------------------------------------            
 // DefaultDemoSetup - 
@@ -71,23 +66,19 @@ static int Test1;
 //-----------------------------------------------------------------------------            
 void DefaultDemoSetup()
 {       
-   printf("DemoSetup for Presentation.\n");  
-   
-   // give test vars a distinctive value
-   Test0 = 12345;
-   Test1 = 98765;
-   
-   // Add tag 'dm' to provide Test0 data. 
-   Presentation.Add("dm", Test0); 
-   
-   // Show only data when robot moves.
-   Presentation.Mode = 1;
-   
-   // Show data once every 100ms                                   
-   Presentation.Interval.SetMs(100);
-                                         
-   // Show configuration
-   Presentation.Dump();   
+   printf("DemoSetup for SRF08 i2c ultrasonic sensor.\n");
+   //--------------------------------------------
+   // Add sensor to task list.
+   // The task has it's own timing, so you could
+   // use the Milisecond task or the idle task.
+   //--------------------------------------------
+   MsTasks.Add(FP_FNAME(SRF08));
+
+   // Optional disable on startup:             
+   // SRF08.Enable = false; // default is true,
+
+   // Optional change ping interval             
+   //SRF08.Interval = 90; // default is 70ms,   
 }
 
 //----------------------------------------------------------------------------- 
@@ -96,33 +87,16 @@ void DefaultDemoSetup()
 //-----------------------------------------------------------------------------            
 void CliCmd_DefaultDemo(int NrParams, TCiParams *P)
 {  
-   printf("Demo command for Presentation.\n");
-
-   if (NrParams == 0) {  
-      printf("Demo <n> (n=0..2) changes dm setup\n");
-      Presentation.Dump();
-      return;   
-   }
-
-   switch(P[0].PInt) { 
-      case 0 : {              
-         printf("Delete dm tag\n");
-         Presentation.Delete("dm");
-         break;
-      }
-      case 1 : {
-         printf("Set dm tag to Test0 (12345)\n");
-         Presentation.Add("dm", Test0);
-         break;
-      }
-      case 2 : {
-         printf("Set dm tag to Test1 (98765)\n");
-         Presentation.Add("dm", Test1);
-         break;
-      }
+   printf("Demo command for SRF08 i2c ultrasonic sensor.\n");
+   
+   if (SRF08.Distance < 990) {
+      printf("SRF08 enable: %d, distance: %d mm, light: %d\n", SRF08.Enable, SRF08.Distance, SRF08.LDR);
+   } else {
+      printf("SRF08 enable: %d, no valid distance, light: %d.\n", SRF08.Enable, SRF08.LDR);
    }
 }   
 
 //-------------
 // OTHER CODE 
 //-------------
+

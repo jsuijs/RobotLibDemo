@@ -1,9 +1,9 @@
 //-----------------------------------------------------------------------------
-// DemoPresentation.cpp
+// DemoArIo.cpp
 //
 // Copyright (c) 2013-2016 Joep Suijs - All rights reserved.        
 //
-// This demo shows how to use the Presentation class.
+// This demo shows how to use ArIo.
 //
 // RobotLib tags: DEMO
 //-----------------------------------------------------------------------------
@@ -31,28 +31,13 @@
 //-----------------------------------------------------------------------------
 // tags_end
 //----------------------------------------------------------------------------- 
- 
 
-#define DEMO_NAME DemoPresentation
+#define DEMO_NAME DemoArIo
 
 //-------------
 // OVERVIEW
 //-------------
-/*     
-   The presentation class provides information on the
-   status of the robot for presentation. By default it
-   provides the robot position (x, y and degrees).
-   Additional data can be added. 
-
-   The format of the data is: 
-   [DATA] P_x:4 P_y:0 Hd:0 [/DATA]
-
-   The data is sent to the console port.
-   
-   When the data is sent, is controlled by mode:
-      0 - Off  (do not print)
-      1 - Auto (print when the robot has moved)
-      2 - On   (print at fixed interval)        
+/*
 */
 
 //-------------
@@ -62,8 +47,7 @@
 //-------------
 // INSTANCES 
 //-------------
-static int Test0;
-static int Test1;
+TArIo ArIo(ARIO_DEFAULT_I2C_ADDRESS);   
 
 //-----------------------------------------------------------------------------            
 // DefaultDemoSetup - 
@@ -71,23 +55,20 @@ static int Test1;
 //-----------------------------------------------------------------------------            
 void DefaultDemoSetup()
 {       
-   printf("DemoSetup for Presentation.\n");  
+   printf("DemoSetup for ArIo - Arduino IO.\n");
    
-   // give test vars a distinctive value
-   Test0 = 12345;
-   Test1 = 98765;
-   
-   // Add tag 'dm' to provide Test0 data. 
-   Presentation.Add("dm", Test0); 
-   
-   // Show only data when robot moves.
-   Presentation.Mode = 1;
-   
-   // Show data once every 100ms                                   
-   Presentation.Interval.SetMs(100);
-                                         
-   // Show configuration
-   Presentation.Dump();   
+   // Add ArIo to the taks list, so it reads
+   // the level of the digital inputs and 
+   // - if configured (see below) - analog inputs.
+   // And... writes any changes in digital output levels.
+   MainTasks.Add(FP_FNAME(ArIo));                       
+      
+   // The ArIO has 6 ADC ports, A0, A1, A2, A3, A6 & A7.
+   // By default, none of them are read to keep the i2c 
+   // message short.
+    
+   ArIo.NrAdc = 3;   // This activates reading of the 
+                     // lower 3 adc ports (A0, A1 & A2).
 }
 
 //----------------------------------------------------------------------------- 
@@ -96,31 +77,37 @@ void DefaultDemoSetup()
 //-----------------------------------------------------------------------------            
 void CliCmd_DefaultDemo(int NrParams, TCiParams *P)
 {  
-   printf("Demo command for Presentation.\n");
-
-   if (NrParams == 0) {  
-      printf("Demo <n> (n=0..2) changes dm setup\n");
-      Presentation.Dump();
-      return;   
-   }
-
-   switch(P[0].PInt) { 
-      case 0 : {              
-         printf("Delete dm tag\n");
-         Presentation.Delete("dm");
-         break;
-      }
-      case 1 : {
-         printf("Set dm tag to Test0 (12345)\n");
-         Presentation.Add("dm", Test0);
-         break;
-      }
-      case 2 : {
-         printf("Set dm tag to Test1 (98765)\n");
-         Presentation.Add("dm", Test1);
-         break;
-      }
-   }
+   printf("Demo command for ArIo - Arduino IO.\n");    
+   
+   // Use digitalRead to get the (buffered) level of a pin.
+   if (ArIo.digitalRead(AR_D4)) {
+      printf("Arduino digital port 4 is high!\n");
+   } else {
+      printf("Arduino digital port 4 is low...\n");
+   }                                
+  
+   // You can also read the buffer directly to
+   // get all Digital Input (DIn) levels at once.  
+   printf("Ardiuno inputs: 0x%04x\n", ArIo.DIn);
+   
+   // use 'pinMode' to set pin 13 as output
+   ArIo.pinMode(AR_D13, AR_OUTPUT); 
+   // Note: pinMode triggers an extra i2c message
+   
+   // use digitalWrite to set pin 13 high                                 
+   ArIo.digitalWrite(AR_D13, 1);   
+   // Note: digitalWrite commands update a local copy.
+   // Takt will update the Arduino based on this copy.
+   
+   // Read (buffered) analog input.
+   printf("Analog input AR_A0 is %d\n", ArIo.analogRead(AR_A0));
+   // Note: by default, no analog inputs are read / buffered.
+   // See setup how to read the required number of analog ports.  
+   
+   // Get the analog value from the buffer
+   printf("Second analog input is %d\n", ArIo.AnalogIn[1]);
+   // Note: A4 and A5 are skipped in this array.
+   // Index 3 corresponds to AR_A3, index 4 to AR_A6.  
 }   
 
 //-------------

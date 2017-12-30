@@ -1,9 +1,9 @@
 //-----------------------------------------------------------------------------
-// DemoPresentation.cpp
+// TestFloatIntPerformance.cpp
 //
-// Copyright (c) 2013-2016 Joep Suijs - All rights reserved.        
+// Copyright (c) 2013-2017 Joep Suijs - All rights reserved.        
 //
-// This demo shows how to use the Presentation class.
+// This demo shows how to use TestFloat.
 //
 // RobotLib tags: DEMO
 //-----------------------------------------------------------------------------
@@ -31,28 +31,13 @@
 //-----------------------------------------------------------------------------
 // tags_end
 //----------------------------------------------------------------------------- 
- 
 
-#define DEMO_NAME DemoPresentation
+#define DEMO_NAME DemoTestFloat
 
 //-------------
 // OVERVIEW
 //-------------
-/*     
-   The presentation class provides information on the
-   status of the robot for presentation. By default it
-   provides the robot position (x, y and degrees).
-   Additional data can be added. 
-
-   The format of the data is: 
-   [DATA] P_x:4 P_y:0 Hd:0 [/DATA]
-
-   The data is sent to the console port.
-   
-   When the data is sent, is controlled by mode:
-      0 - Off  (do not print)
-      1 - Auto (print when the robot has moved)
-      2 - On   (print at fixed interval)        
+/*
 */
 
 //-------------
@@ -62,8 +47,21 @@
 //-------------
 // INSTANCES 
 //-------------
-static int Test0;
-static int Test1;
+
+float fMult_F_F(float P1, float P2)
+{
+   return P1 * P2;
+}
+
+int iMult_F_F(float P1, float P2)
+{
+   return P1 * P2;
+}
+
+int iMult_I_I(int P1, int P2)
+{
+   return P1 * P2;
+}
 
 //-----------------------------------------------------------------------------            
 // DefaultDemoSetup - 
@@ -71,23 +69,7 @@ static int Test1;
 //-----------------------------------------------------------------------------            
 void DefaultDemoSetup()
 {       
-   printf("DemoSetup for Presentation.\n");  
-   
-   // give test vars a distinctive value
-   Test0 = 12345;
-   Test1 = 98765;
-   
-   // Add tag 'dm' to provide Test0 data. 
-   Presentation.Add("dm", Test0); 
-   
-   // Show only data when robot moves.
-   Presentation.Mode = 1;
-   
-   // Show data once every 100ms                                   
-   Presentation.Interval.SetMs(100);
-                                         
-   // Show configuration
-   Presentation.Dump();   
+   printf("DemoSetup for TestFloat.\n");
 }
 
 //----------------------------------------------------------------------------- 
@@ -95,32 +77,40 @@ void DefaultDemoSetup()
 //-----------------------------------------------------------------------------            
 //-----------------------------------------------------------------------------            
 void CliCmd_DefaultDemo(int NrParams, TCiParams *P)
-{  
-   printf("Demo command for Presentation.\n");
+{   
+   volatile float xyz_f;
+   volatile int   xyz_i;
+   int Loops = 1000;
+   if (NrParams == 1) Loops = P[0].PInt;
+   printf("Demo command for TestFloat (Loops=%d).\n", Loops);       
+   
+   StopWatchReset();     
+   for (int i=0; i<Loops; i++) xyz_f = fMult_F_F(xyz_f, xyz_f);
+   printf("Time f=fFF(ff): %d\n", (int)StopWatchGet());
 
-   if (NrParams == 0) {  
-      printf("Demo <n> (n=0..2) changes dm setup\n");
-      Presentation.Dump();
-      return;   
-   }
+   StopWatchReset();     
+   for (int i=0; i<Loops; i++) xyz_i = fMult_F_F(xyz_f, xyz_f);
+   printf("Time i=fFF(ff): %d\n", (int)StopWatchGet());
 
-   switch(P[0].PInt) { 
-      case 0 : {              
-         printf("Delete dm tag\n");
-         Presentation.Delete("dm");
-         break;
-      }
-      case 1 : {
-         printf("Set dm tag to Test0 (12345)\n");
-         Presentation.Add("dm", Test0);
-         break;
-      }
-      case 2 : {
-         printf("Set dm tag to Test1 (98765)\n");
-         Presentation.Add("dm", Test1);
-         break;
-      }
-   }
+   StopWatchReset();     
+   for (int i=0; i<Loops; i++) xyz_i = iMult_F_F(xyz_f, xyz_f);
+   printf("Time i=iFF(ff): %d\n", (int)StopWatchGet());
+
+   StopWatchReset();     
+   for (int i=0; i<Loops; i++) xyz_i = iMult_F_F(xyz_i, xyz_i);
+   printf("Time i=iFF(ii): %d\n", (int)StopWatchGet());
+
+   StopWatchReset();     
+   for (int i=0; i<Loops; i++) xyz_i = iMult_I_I(xyz_i, xyz_i);
+   printf("Time i=iII(ii): %d\n", (int)StopWatchGet());
+
+   StopWatchReset();     
+   for (int i=0; i<Loops; i++) xyz_i = iMult_I_I(xyz_f, xyz_f);
+   printf("Time i=iII(ff): %d\n", (int)StopWatchGet());
+
+   StopWatchReset();     
+   for (int i=0; i<Loops; i++) xyz_f = iMult_I_I(xyz_i, xyz_i);
+   printf("Time f=iII(ii): %d\n", (int)StopWatchGet());
 }   
 
 //-------------

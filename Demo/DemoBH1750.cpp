@@ -1,9 +1,9 @@
 //-----------------------------------------------------------------------------
-// DemoPresentation.cpp
+// DemoBH1750.cpp
 //
 // Copyright (c) 2013-2016 Joep Suijs - All rights reserved.        
 //
-// This demo shows how to use the Presentation class.
+// This demo shows how to use the BH1750 i2c light senso.
 //
 // RobotLib tags: DEMO
 //-----------------------------------------------------------------------------
@@ -31,28 +31,19 @@
 //-----------------------------------------------------------------------------
 // tags_end
 //----------------------------------------------------------------------------- 
- 
 
-#define DEMO_NAME DemoPresentation
+#define DEMO_NAME DemoBH1750
 
 //-------------
 // OVERVIEW
 //-------------
-/*     
-   The presentation class provides information on the
-   status of the robot for presentation. By default it
-   provides the robot position (x, y and degrees).
-   Additional data can be added. 
-
-   The format of the data is: 
-   [DATA] P_x:4 P_y:0 Hd:0 [/DATA]
-
-   The data is sent to the console port.
+/*   
+   Basic implementation to init & read one of two BH1750 light sensors.
+   No tasks, just calls i2c comms when functions are called.           
    
-   When the data is sent, is controlled by mode:
-      0 - Off  (do not print)
-      1 - Auto (print when the robot has moved)
-      2 - On   (print at fixed interval)        
+   The sensor has an pin called ADDR, which select the i2c slave address.
+   This pin is default low; pull it high for the second BH1750 on the
+   I2C bus.
 */
 
 //-------------
@@ -62,8 +53,6 @@
 //-------------
 // INSTANCES 
 //-------------
-static int Test0;
-static int Test1;
 
 //-----------------------------------------------------------------------------            
 // DefaultDemoSetup - 
@@ -71,23 +60,11 @@ static int Test1;
 //-----------------------------------------------------------------------------            
 void DefaultDemoSetup()
 {       
-   printf("DemoSetup for Presentation.\n");  
+   printf("DemoSetup for BH1750 i2c light sensor.\n");   
    
-   // give test vars a distinctive value
-   Test0 = 12345;
-   Test1 = 98765;
-   
-   // Add tag 'dm' to provide Test0 data. 
-   Presentation.Add("dm", Test0); 
-   
-   // Show only data when robot moves.
-   Presentation.Mode = 1;
-   
-   // Show data once every 100ms                                   
-   Presentation.Interval.SetMs(100);
-                                         
-   // Show configuration
-   Presentation.Dump();   
+   printf("Try to init 2 sensors; one might give an error.\n");   
+   BH1750Init(0);   // init sensor with address line low (open)
+   BH1750Init(1);   // init sensor with address line high
 }
 
 //----------------------------------------------------------------------------- 
@@ -95,32 +72,16 @@ void DefaultDemoSetup()
 //-----------------------------------------------------------------------------            
 //-----------------------------------------------------------------------------            
 void CliCmd_DefaultDemo(int NrParams, TCiParams *P)
-{  
-   printf("Demo command for Presentation.\n");
+{  int Light;
+   
+   printf("Demo command for BH1750 i2c light sensor.\n");  
+   printf("Try to read 2 sensors; one might give an error.\n");   
 
-   if (NrParams == 0) {  
-      printf("Demo <n> (n=0..2) changes dm setup\n");
-      Presentation.Dump();
-      return;   
-   }
+   Light = BH1750Read(0);   // read sensor with address line low (default)
+   printf("Light0: %d lux\n", Light);
 
-   switch(P[0].PInt) { 
-      case 0 : {              
-         printf("Delete dm tag\n");
-         Presentation.Delete("dm");
-         break;
-      }
-      case 1 : {
-         printf("Set dm tag to Test0 (12345)\n");
-         Presentation.Add("dm", Test0);
-         break;
-      }
-      case 2 : {
-         printf("Set dm tag to Test1 (98765)\n");
-         Presentation.Add("dm", Test1);
-         break;
-      }
-   }
+   Light = BH1750Read(1);   // read sensor with address line high
+   printf("Light1: %d lux\n", Light);
 }   
 
 //-------------

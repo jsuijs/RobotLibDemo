@@ -1,9 +1,9 @@
 //-----------------------------------------------------------------------------
-// DemoPresentation.cpp
+// DemoVL6180x.cpp
 //
 // Copyright (c) 2013-2016 Joep Suijs - All rights reserved.        
 //
-// This demo shows how to use the Presentation class.
+// This demo shows how to use VL6180x ToF ranging sensor.
 //
 // RobotLib tags: DEMO
 //-----------------------------------------------------------------------------
@@ -31,63 +31,59 @@
 //-----------------------------------------------------------------------------
 // tags_end
 //----------------------------------------------------------------------------- 
- 
 
-#define DEMO_NAME DemoPresentation
-
+#define DEMO_NAME DemoVL6180x
+               
 //-------------
 // OVERVIEW
 //-------------
-/*     
-   The presentation class provides information on the
-   status of the robot for presentation. By default it
-   provides the robot position (x, y and degrees).
-   Additional data can be added. 
+/*               
 
-   The format of the data is: 
-   [DATA] P_x:4 P_y:0 Hd:0 [/DATA]
-
-   The data is sent to the console port.
-   
-   When the data is sent, is controlled by mode:
-      0 - Off  (do not print)
-      1 - Auto (print when the robot has moved)
-      2 - On   (print at fixed interval)        
 */
 
 //-------------
 // DECLARATIONS 
 //-------------
+// For access from other source files, add prototypes to project.h like
+extern TVL6180x   VL6180x;    // Note: this prototype is also in VL6180x.h, so you
+                              //       can omit it. However, you need this prototype
+                              //       for any sensor with a different name. 
  
 //-------------
 // INSTANCES 
-//-------------
-static int Test0;
-static int Test1;
+//-------------    
 
+TVL6180x    VL6180x("MyVl6180x", VL6180X_DEFAULT_I2C_ADDRESS);     // VL6180x instance with i2c slave address as parameter 
+                        
 //-----------------------------------------------------------------------------            
 // DefaultDemoSetup - 
 //-----------------------------------------------------------------------------            
 //-----------------------------------------------------------------------------            
 void DefaultDemoSetup()
 {       
-   printf("DemoSetup for Presentation.\n");  
+   printf("DemoSetup for VL6180x ToF ranging sensor.\n");     
+
+   // Init sensor. 
+   // If the I2C address is not the default one, this
+   // call also updates the sensor address.  
+   VL6180x.Init();      
    
-   // give test vars a distinctive value
-   Test0 = 12345;
-   Test1 = 98765;
-   
-   // Add tag 'dm' to provide Test0 data. 
-   Presentation.Add("dm", Test0); 
-   
-   // Show only data when robot moves.
-   Presentation.Mode = 1;
-   
-   // Show data once every 100ms                                   
-   Presentation.Interval.SetMs(100);
-                                         
-   // Show configuration
-   Presentation.Dump();   
+   // Set scaling to 3 (max range 200 * 3 = 600mm, result (Distance) remains in mm).   
+   VL6180x.SetScaling(3);
+
+   //--------------------------------------------
+   // Add sensor to task list.
+   // The sensor is checked every cycle via i2c, so the
+   // main tasklist is recommended. For less delay, you 
+   // could choose the milisecond task list...
+   //--------------------------------------------
+   MainTasks.Add(FP_FNAME(VL6180x));
+
+   // Optional disable on startup:             
+   //VL6180x.Enable = false; // default is true,
+
+   // Optional add output to Registry
+   Registry.Add("VL6180x", VL6180x.Distance); 
 }
 
 //----------------------------------------------------------------------------- 
@@ -96,31 +92,9 @@ void DefaultDemoSetup()
 //-----------------------------------------------------------------------------            
 void CliCmd_DefaultDemo(int NrParams, TCiParams *P)
 {  
-   printf("Demo command for Presentation.\n");
-
-   if (NrParams == 0) {  
-      printf("Demo <n> (n=0..2) changes dm setup\n");
-      Presentation.Dump();
-      return;   
-   }
-
-   switch(P[0].PInt) { 
-      case 0 : {              
-         printf("Delete dm tag\n");
-         Presentation.Delete("dm");
-         break;
-      }
-      case 1 : {
-         printf("Set dm tag to Test0 (12345)\n");
-         Presentation.Add("dm", Test0);
-         break;
-      }
-      case 2 : {
-         printf("Set dm tag to Test1 (98765)\n");
-         Presentation.Add("dm", Test1);
-         break;
-      }
-   }
+   printf("Demo command for VL6180x laser ranging sensor.\n");
+   
+   printf("VL6180x distance: %d mm\n", VL6180x.Distance);   
 }   
 
 //-------------

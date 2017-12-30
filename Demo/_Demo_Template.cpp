@@ -5,7 +5,7 @@
 //
 // This demo shows how to use XYZ.
 //
-// RobotLib tags: RED_SAMPLE
+// RobotLib tags: DEMO
 //-----------------------------------------------------------------------------
 // This file is part of RobotLib.
 // 
@@ -24,10 +24,10 @@
 // 
 // See http://wiki.robotmc.be/index.php?title=RobotLib for more information.
 //-----------------------------------------------------------------------------
-// Deze file is een RODE SAMPLE file.
-// Een RODE file is een standaard file, die voor iedere toepassing gelijk is.
-// SAMPLE files zijn voorbeeld files. Plaats deze in de projectdirectory en 
-// pas ze aan voor het project.
+// This is a DEMO file.
+// A DEMO file can be included in a project by adding it to makefile.do.
+// For details, see: 
+//    http://wiki.robotmc.be/index.php?title=RobotLib_Modules#RobotLib_Demo.27s
 //-----------------------------------------------------------------------------
 // tags_end
 //----------------------------------------------------------------------------- 

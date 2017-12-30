@@ -1,9 +1,9 @@
 //-----------------------------------------------------------------------------
-// DemoPresentation.cpp
+// DemoPid.cpp
 //
-// Copyright (c) 2013-2016 Joep Suijs - All rights reserved.        
+// Copyright (c) 2013-2017 Joep Suijs - All rights reserved.        
 //
-// This demo shows how to use the Presentation class.
+// This demo shows how to use the PID controller.
 //
 // RobotLib tags: DEMO
 //-----------------------------------------------------------------------------
@@ -31,39 +31,34 @@
 //-----------------------------------------------------------------------------
 // tags_end
 //----------------------------------------------------------------------------- 
- 
 
-#define DEMO_NAME DemoPresentation
+#define DEMO_NAME DemoPIDController
 
 //-------------
 // OVERVIEW
 //-------------
-/*     
-   The presentation class provides information on the
-   status of the robot for presentation. By default it
-   provides the robot position (x, y and degrees).
-   Additional data can be added. 
+/*                          
+   A PID controller is control loop feedback mechanism for
+   (more or less) linear processes. 
 
-   The format of the data is: 
-   [DATA] P_x:4 P_y:0 Hd:0 [/DATA]
-
-   The data is sent to the console port.
+   The core of this PID controller is Brett Beauregard excellent
+   PID libarary for arduino.   
    
-   When the data is sent, is controlled by mode:
-      0 - Off  (do not print)
-      1 - Auto (print when the robot has moved)
-      2 - On   (print at fixed interval)        
+   This core routines are integrated into robotlib through the
+   takt class and command line interface.
 */
 
 //-------------
 // DECLARATIONS 
 //-------------
+
  
 //-------------
 // INSTANCES 
 //-------------
-static int Test0;
-static int Test1;
+TPID Pid1;
+
+static int MyInput, MySetpoint;
 
 //-----------------------------------------------------------------------------            
 // DefaultDemoSetup - 
@@ -71,23 +66,27 @@ static int Test1;
 //-----------------------------------------------------------------------------            
 void DefaultDemoSetup()
 {       
-   printf("DemoSetup for Presentation.\n");  
+   printf("DemoSetup for PID controller.\n");  
    
-   // give test vars a distinctive value
-   Test0 = 12345;
-   Test1 = 98765;
+   // Setup PID controller
+   Pid1.Name      = "DemoPid";
+   Pid1.SetSampleTime(MAIN_TAKT_INTERVAL);         // Sample time in milliseconds (MAIN_TAKT_TIME is default).  
+   if (Pid1.NeedDefaults()) {
+      Pid1.SetTunings(2.0, 0.1, 0.1);                 // Set Kp, Ki & Kd
+   }
+
+   Pid1.Input.SetSrc(MyInput);                     // Tell the PID where to find the input (see SourceConnect for more details and options).
+   Pid1.Setpoint.SetSrc(MySetpoint);               // Tell the PID where to find the setpoint (see SourceConnect for more details and options).
+   Pid1.SetOutputLimits(2, 4095);                  // set output range. Note: value 2 (or 1, not 0) makes it more obvious that the limit is hit.
+
+   Pid1.SetTunerType(PID_TYPE_SOME_OVERSHOOT_PID, false); // default type, tells the autotuner how to transform Ku & Pu to Ki, Kp and Kd
+
+   MainTasks.Add(FP_FNAME(Pid1), 5);               // Add to TaktList with order 5 (after sensors, which in general have default order 0).
    
-   // Add tag 'dm' to provide Test0 data. 
-   Presentation.Add("dm", Test0); 
+   MySetpoint = 1024;
    
-   // Show only data when robot moves.
-   Presentation.Mode = 1;
-   
-   // Show data once every 100ms                                   
-   Presentation.Interval.SetMs(100);
-                                         
-   // Show configuration
-   Presentation.Dump();   
+   // temporary
+   CliAddCommands(CliPid, "Pid");  
 }
 
 //----------------------------------------------------------------------------- 
@@ -96,30 +95,25 @@ void DefaultDemoSetup()
 //-----------------------------------------------------------------------------            
 void CliCmd_DefaultDemo(int NrParams, TCiParams *P)
 {  
-   printf("Demo command for Presentation.\n");
+   printf("Demo command for PID controller.\n");
 
-   if (NrParams == 0) {  
-      printf("Demo <n> (n=0..2) changes dm setup\n");
-      Presentation.Dump();
-      return;   
+   // Note: we have no process to control and no feedback, so running 
+   // the PID controller is quite useless. 
+   // 'Demo' TestPid shows a working PID controller with a simulated process.
+   
+   // Link output back to input
+   MyInput = (MyInput + Pid1.Output) / 2;
+   
+   if (NrParams == 0) {
+      // no params -> print output
+      printf("Pid %s %d -> %d\n", Pid1.Name, MyInput, Pid1.Output);
+      return;
    }
-
-   switch(P[0].PInt) { 
-      case 0 : {              
-         printf("Delete dm tag\n");
-         Presentation.Delete("dm");
-         break;
-      }
-      case 1 : {
-         printf("Set dm tag to Test0 (12345)\n");
-         Presentation.Add("dm", Test0);
-         break;
-      }
-      case 2 : {
-         printf("Set dm tag to Test1 (98765)\n");
-         Presentation.Add("dm", Test1);
-         break;
-      }
+   if (NrParams == 1) {
+      // one param -> setpoint                             
+      MySetpoint = P[0].PInt;
+      printf("Pid %s setpoint: %d\n", Pid1.Name, MySetpoint);
+      return;
    }
 }   
 

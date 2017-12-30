@@ -1,9 +1,9 @@
 //-----------------------------------------------------------------------------
-// DemoPresentation.cpp
+// DemoPCF8591.cpp
 //
 // Copyright (c) 2013-2016 Joep Suijs - All rights reserved.        
 //
-// This demo shows how to use the Presentation class.
+// This demo shows how to use PCF8591 i2c 4ch ADC 1 ch DAC.
 //
 // RobotLib tags: DEMO
 //-----------------------------------------------------------------------------
@@ -31,28 +31,20 @@
 //-----------------------------------------------------------------------------
 // tags_end
 //----------------------------------------------------------------------------- 
- 
 
-#define DEMO_NAME DemoPresentation
+#define DEMO_NAME DemoPCF8591
 
 //-------------
 // OVERVIEW
 //-------------
-/*     
-   The presentation class provides information on the
-   status of the robot for presentation. By default it
-   provides the robot position (x, y and degrees).
-   Additional data can be added. 
-
-   The format of the data is: 
-   [DATA] P_x:4 P_y:0 Hd:0 [/DATA]
-
-   The data is sent to the console port.
+/*   
+   Basic implementation to init & PCF8591 i2c 
+   This chip has four 8-bit ADC inputs and one 8-bit DAC output.
    
-   When the data is sent, is controlled by mode:
-      0 - Off  (do not print)
-      1 - Auto (print when the robot has moved)
-      2 - On   (print at fixed interval)        
+   No tasks, just calls i2c comms when functions are called.           
+   
+   The PCF8591 has 3 pins to select the i2c slave address.
+   On the cheap modules from Ebay, all these pins are low.
 */
 
 //-------------
@@ -62,8 +54,6 @@
 //-------------
 // INSTANCES 
 //-------------
-static int Test0;
-static int Test1;
 
 //-----------------------------------------------------------------------------            
 // DefaultDemoSetup - 
@@ -71,23 +61,8 @@ static int Test1;
 //-----------------------------------------------------------------------------            
 void DefaultDemoSetup()
 {       
-   printf("DemoSetup for Presentation.\n");  
-   
-   // give test vars a distinctive value
-   Test0 = 12345;
-   Test1 = 98765;
-   
-   // Add tag 'dm' to provide Test0 data. 
-   Presentation.Add("dm", Test0); 
-   
-   // Show only data when robot moves.
-   Presentation.Mode = 1;
-   
-   // Show data once every 100ms                                   
-   Presentation.Interval.SetMs(100);
-                                         
-   // Show configuration
-   Presentation.Dump();   
+   printf("DemoSetup for PCF8591 i2c 4ch ADC 1 ch DAC.\n");   
+   PCF8591Init(PCF8591_BASE_I2C_ADDRESS);  
 }
 
 //----------------------------------------------------------------------------- 
@@ -95,32 +70,23 @@ void DefaultDemoSetup()
 //-----------------------------------------------------------------------------            
 //-----------------------------------------------------------------------------            
 void CliCmd_DefaultDemo(int NrParams, TCiParams *P)
-{  
-   printf("Demo command for Presentation.\n");
+{  static int DacOut = 256;
+   
+   printf("Demo command for PCF8591 i2c 4ch ADC 1 ch DAC.\n");  
 
-   if (NrParams == 0) {  
-      printf("Demo <n> (n=0..2) changes dm setup\n");
-      Presentation.Dump();
-      return;   
-   }
+   // Increment DacOut on each call to show the output changes.   
+   DacOut += 16;
+   if (DacOut > 255) DacOut = 0;
+   
+   // Set DAC
+   printf("Set PCF8591 DAC output to %d\n", DacOut);
+   PCF8591Write(PCF8591_BASE_I2C_ADDRESS, DacOut);
 
-   switch(P[0].PInt) { 
-      case 0 : {              
-         printf("Delete dm tag\n");
-         Presentation.Delete("dm");
-         break;
-      }
-      case 1 : {
-         printf("Set dm tag to Test0 (12345)\n");
-         Presentation.Add("dm", Test0);
-         break;
-      }
-      case 2 : {
-         printf("Set dm tag to Test1 (98765)\n");
-         Presentation.Add("dm", Test1);
-         break;
-      }
-   }
+   // Read each ADC channel
+   printf("PCF8591 ADC0 : %d\n", PCF8591Read(PCF8591_BASE_I2C_ADDRESS, 0));
+   printf("PCF8591 ADC1 : %d\n", PCF8591Read(PCF8591_BASE_I2C_ADDRESS, 1));
+   printf("PCF8591 ADC2 : %d\n", PCF8591Read(PCF8591_BASE_I2C_ADDRESS, 2));
+   printf("PCF8591 ADC3 : %d\n", PCF8591Read(PCF8591_BASE_I2C_ADDRESS, 3));
 }   
 
 //-------------

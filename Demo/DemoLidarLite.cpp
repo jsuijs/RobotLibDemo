@@ -1,9 +1,9 @@
 //-----------------------------------------------------------------------------
-// DemoPresentation.cpp
+// DemoLidarLite.cpp
 //
 // Copyright (c) 2013-2016 Joep Suijs - All rights reserved.        
 //
-// This demo shows how to use the Presentation class.
+// This demo shows how to use LidarLite laser ranging sensor.
 //
 // RobotLib tags: DEMO
 //-----------------------------------------------------------------------------
@@ -31,63 +31,50 @@
 //-----------------------------------------------------------------------------
 // tags_end
 //----------------------------------------------------------------------------- 
- 
 
-#define DEMO_NAME DemoPresentation
-
+#define DEMO_NAME DemoLidarLite
+               
 //-------------
 // OVERVIEW
 //-------------
-/*     
-   The presentation class provides information on the
-   status of the robot for presentation. By default it
-   provides the robot position (x, y and degrees).
-   Additional data can be added. 
-
-   The format of the data is: 
-   [DATA] P_x:4 P_y:0 Hd:0 [/DATA]
-
-   The data is sent to the console port.
-   
-   When the data is sent, is controlled by mode:
-      0 - Off  (do not print)
-      1 - Auto (print when the robot has moved)
-      2 - On   (print at fixed interval)        
+/*               
+   * multiple instances can be created, one for each sensor.
 */
 
 //-------------
 // DECLARATIONS 
 //-------------
+// For access from other source files, add prototypes to project.h like
+extern TLidarLite   LidarLite;   
  
 //-------------
 // INSTANCES 
-//-------------
-static int Test0;
-static int Test1;
+//-------------    
 
+TLidarLite LidarLite(LIDAR_LITE_DEFAULT_I2C_ADDRESS);     // LidarLite instance with i2c slave address as parameter 
+                        
 //-----------------------------------------------------------------------------            
 // DefaultDemoSetup - 
 //-----------------------------------------------------------------------------            
 //-----------------------------------------------------------------------------            
 void DefaultDemoSetup()
 {       
-   printf("DemoSetup for Presentation.\n");  
-   
-   // give test vars a distinctive value
-   Test0 = 12345;
-   Test1 = 98765;
-   
-   // Add tag 'dm' to provide Test0 data. 
-   Presentation.Add("dm", Test0); 
-   
-   // Show only data when robot moves.
-   Presentation.Mode = 1;
-   
-   // Show data once every 100ms                                   
-   Presentation.Interval.SetMs(100);
-                                         
-   // Show configuration
-   Presentation.Dump();   
+   printf("DemoSetup for LidarLite laser ranging sensor.\n");
+   //--------------------------------------------
+   // Add sensor to task list.
+   // The task has it's own timing, so you could
+   // use the Milisecond task or the idle task. 
+   // (see Cycle time below)
+   //--------------------------------------------
+   MsTasks.Add(FP_FNAME(LidarLite));
+   //IdleTasks.Add(FP_FNAME(LidarLite));
+
+   // Optional disable on startup:             
+   // LidarLite.Enable = false; // default is true,
+
+   // Optional add output to Registry
+   //Registry.Add("LidarLite", LidarLite.Distance); 
+   //Registry.Add("LLite Q", LidarLite.SignalStrength); 
 }
 
 //----------------------------------------------------------------------------- 
@@ -96,31 +83,18 @@ void DefaultDemoSetup()
 //-----------------------------------------------------------------------------            
 void CliCmd_DefaultDemo(int NrParams, TCiParams *P)
 {  
-   printf("Demo command for Presentation.\n");
-
-   if (NrParams == 0) {  
-      printf("Demo <n> (n=0..2) changes dm setup\n");
-      Presentation.Dump();
-      return;   
-   }
-
-   switch(P[0].PInt) { 
-      case 0 : {              
-         printf("Delete dm tag\n");
-         Presentation.Delete("dm");
-         break;
-      }
-      case 1 : {
-         printf("Set dm tag to Test0 (12345)\n");
-         Presentation.Add("dm", Test0);
-         break;
-      }
-      case 2 : {
-         printf("Set dm tag to Test1 (98765)\n");
-         Presentation.Add("dm", Test1);
-         break;
-      }
-   }
+   printf("Demo command for LidarLite laser ranging sensor.\n");
+   
+   printf("LidarLite distance: %d mm, SigStrength: %d\n", LidarLite.Distance, LidarLite.SignalStrength);
+   
+   // Cycle time / FixedDelay is an indication of the sensor speed.
+   // Note: cycle time excludes state machine call time. About 3-4 calls 
+   //       (state transistions) are required for a reading, which is 
+   //       about 3-4 ms when MsTakt is used. 
+   //       IdleTasks yield a more accurate result of this value, but 
+   //       also yield more i2c traffic.
+   printf("FYI: cycle time: %d ms\n", LidarLite.FixedDelay);
+   
 }   
 
 //-------------

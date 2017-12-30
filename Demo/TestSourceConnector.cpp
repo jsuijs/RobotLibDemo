@@ -1,9 +1,9 @@
 //-----------------------------------------------------------------------------
-// DemoPresentation.cpp
+// TestSourceConnector.cpp
 //
-// Copyright (c) 2013-2016 Joep Suijs - All rights reserved.        
+// Copyright (c) 2013-2017 Joep Suijs - All rights reserved.        
 //
-// This demo shows how to use the Presentation class.
+// This demo shows how to use SourceConnector.
 //
 // RobotLib tags: DEMO
 //-----------------------------------------------------------------------------
@@ -31,28 +31,13 @@
 //-----------------------------------------------------------------------------
 // tags_end
 //----------------------------------------------------------------------------- 
- 
 
-#define DEMO_NAME DemoPresentation
+#define DEMO_NAME DemoSourceConnector
 
 //-------------
 // OVERVIEW
 //-------------
-/*     
-   The presentation class provides information on the
-   status of the robot for presentation. By default it
-   provides the robot position (x, y and degrees).
-   Additional data can be added. 
-
-   The format of the data is: 
-   [DATA] P_x:4 P_y:0 Hd:0 [/DATA]
-
-   The data is sent to the console port.
-   
-   When the data is sent, is controlled by mode:
-      0 - Off  (do not print)
-      1 - Auto (print when the robot has moved)
-      2 - On   (print at fixed interval)        
+/*
 */
 
 //-------------
@@ -62,8 +47,40 @@
 //-------------
 // INSTANCES 
 //-------------
-static int Test0;
-static int Test1;
+TSourceConnector ScIntP, ScIntF, ScFloatP, ScFloatF;     
+int   I1 = 4711;
+float F1 = 3.1415926;
+
+float SrcFunctInt(int p)   { return I1 * p; }
+float SrcFunctFloat(int p) { return F1 * p; }
+
+void TestScOutputs(TSourceConnector Sc, const char *Name)
+{  int i, t;
+   float f;
+   bool r;
+   
+   printf("SourceConnector '%s'\n");
+
+   StopWatchReset();
+   i =  Sc.ReadInt();
+   t = StopWatchGet();
+   printf(" ReadInt:    %d (%d)\n", i, t);   
+   
+   StopWatchReset();
+   f =  Sc.ReadFloat();
+   t = StopWatchGet();
+   printf(" ReadFloat:  %f (%d)\n", f, t);  
+
+   StopWatchReset();
+   r = Sc.Read(i);     
+   t = StopWatchGet();
+   printf(" Read:       %d (%d %d)\n", i, r, t);
+
+   StopWatchReset();
+   r = Sc.Read(f);
+   t = StopWatchGet();
+   printf(" Read:       %f (%d %d)\n", f, r, t);
+}
 
 //-----------------------------------------------------------------------------            
 // DefaultDemoSetup - 
@@ -71,23 +88,12 @@ static int Test1;
 //-----------------------------------------------------------------------------            
 void DefaultDemoSetup()
 {       
-   printf("DemoSetup for Presentation.\n");  
+   printf("DemoSetup for TEST SourceConnector.\n");    
    
-   // give test vars a distinctive value
-   Test0 = 12345;
-   Test1 = 98765;
-   
-   // Add tag 'dm' to provide Test0 data. 
-   Presentation.Add("dm", Test0); 
-   
-   // Show only data when robot moves.
-   Presentation.Mode = 1;
-   
-   // Show data once every 100ms                                   
-   Presentation.Interval.SetMs(100);
-                                         
-   // Show configuration
-   Presentation.Dump();   
+   ScIntP.SetSrc(I1);                   // connect to int pointer
+   ScIntF.SetSrc(SrcFunctInt, 2);       // connect to int function, param/factor 2
+   ScFloatP.SetSrc(F1);                 // connect to float pointer
+   ScFloatF.SetSrc(SrcFunctFloat, 2);   // connect to float function, param/factor 2   
 }
 
 //----------------------------------------------------------------------------- 
@@ -96,33 +102,15 @@ void DefaultDemoSetup()
 //-----------------------------------------------------------------------------            
 void CliCmd_DefaultDemo(int NrParams, TCiParams *P)
 {  
-   printf("Demo command for Presentation.\n");
-
-   if (NrParams == 0) {  
-      printf("Demo <n> (n=0..2) changes dm setup\n");
-      Presentation.Dump();
-      return;   
-   }
-
-   switch(P[0].PInt) { 
-      case 0 : {              
-         printf("Delete dm tag\n");
-         Presentation.Delete("dm");
-         break;
-      }
-      case 1 : {
-         printf("Set dm tag to Test0 (12345)\n");
-         Presentation.Add("dm", Test0);
-         break;
-      }
-      case 2 : {
-         printf("Set dm tag to Test1 (98765)\n");
-         Presentation.Add("dm", Test1);
-         break;
-      }
-   }
+   printf("Demo command for TEST SourceConnector.\n");   
+   
+   TestScOutputs(FP_FNAME(ScIntP));
+   TestScOutputs(FP_FNAME(ScIntF));
+   TestScOutputs(FP_FNAME(ScFloatP));
+   TestScOutputs(FP_FNAME(ScFloatF));
 }   
 
 //-------------
 // OTHER CODE 
 //-------------
+

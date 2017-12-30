@@ -1,9 +1,9 @@
 //-----------------------------------------------------------------------------
-// DemoPresentation.cpp
+// DemoPfKeyRepository.cpp
 //
-// Copyright (c) 2013-2016 Joep Suijs - All rights reserved.        
+// Copyright (c) 2013-2017 Joep Suijs - All rights reserved.        
 //
-// This demo shows how to use the Presentation class.
+// This demo shows how to use PfKeyRepository.
 //
 // RobotLib tags: DEMO
 //-----------------------------------------------------------------------------
@@ -31,28 +31,22 @@
 //-----------------------------------------------------------------------------
 // tags_end
 //----------------------------------------------------------------------------- 
- 
 
-#define DEMO_NAME DemoPresentation
+#define DEMO_NAME DemoPfKeyRepository
 
 //-------------
 // OVERVIEW
 //-------------
-/*     
-   The presentation class provides information on the
-   status of the robot for presentation. By default it
-   provides the robot position (x, y and degrees).
-   Additional data can be added. 
-
-   The format of the data is: 
-   [DATA] P_x:4 P_y:0 Hd:0 [/DATA]
-
-   The data is sent to the console port.
-   
-   When the data is sent, is controlled by mode:
-      0 - Off  (do not print)
-      1 - Auto (print when the robot has moved)
-      2 - On   (print at fixed interval)        
+/*  
+   Please take a look at DemoPfKeyTable for generic information on 
+   PFKeys if you are not familiar with function keys in RobotLib.
+              
+   This CommandStringRepository allows to specify a command string 
+   on the robotlib commandline and link it to a key on the remote control. 
+   Function keys of the remote control are not passed to the CmdStringRepostory,
+   but can be accessed trough PfKeyRepository.   
+   So mainly a runtime feature. But you might want to setup some values at startup.
+   This demo shows you how. 
 */
 
 //-------------
@@ -62,8 +56,6 @@
 //-------------
 // INSTANCES 
 //-------------
-static int Test0;
-static int Test1;
 
 //-----------------------------------------------------------------------------            
 // DefaultDemoSetup - 
@@ -71,23 +63,17 @@ static int Test1;
 //-----------------------------------------------------------------------------            
 void DefaultDemoSetup()
 {       
-   printf("DemoSetup for Presentation.\n");  
-   
-   // give test vars a distinctive value
-   Test0 = 12345;
-   Test1 = 98765;
-   
-   // Add tag 'dm' to provide Test0 data. 
-   Presentation.Add("dm", Test0); 
-   
-   // Show only data when robot moves.
-   Presentation.Mode = 1;
-   
-   // Show data once every 100ms                                   
-   Presentation.Interval.SetMs(100);
-                                         
-   // Show configuration
-   Presentation.Dump();   
+   printf("DemoSetup for PfKeyRepository.\n");
+
+   // It is actually quite simpel. Just provide the
+   // command string and link it to the PfKey of your choice.   
+   CmdStringRepository.Add(RC_F01, "um arc 90 300 100 0 0");
+          
+   // Framework already registered the Repository function
+   // key handler.
+   // You might want to 'add' it again after the last
+   // one to make sure it is the active PfKey handler.
+   PfKey.HandlerSet(FP_FNAME(PFKeyRepository)); 
 }
 
 //----------------------------------------------------------------------------- 
@@ -96,31 +82,24 @@ void DefaultDemoSetup()
 //-----------------------------------------------------------------------------            
 void CliCmd_DefaultDemo(int NrParams, TCiParams *P)
 {  
-   printf("Demo command for Presentation.\n");
-
-   if (NrParams == 0) {  
-      printf("Demo <n> (n=0..2) changes dm setup\n");
-      Presentation.Dump();
-      return;   
-   }
-
-   switch(P[0].PInt) { 
-      case 0 : {              
-         printf("Delete dm tag\n");
-         Presentation.Delete("dm");
-         break;
-      }
-      case 1 : {
-         printf("Set dm tag to Test0 (12345)\n");
-         Presentation.Add("dm", Test0);
-         break;
-      }
-      case 2 : {
-         printf("Set dm tag to Test1 (98765)\n");
-         Presentation.Add("dm", Test1);
-         break;
-      }
-   }
+   printf("Demo command for PfKeyRepository.\n");     
+   
+   printf("\n");
+   printf("Usefull commands when using the Repository PfKey handler: \n");
+   printf("\n");
+   printf(" 'pf list' shows an list of all handlers (number and   \n");
+   printf(" number). The active handler is marked with a star and \n");
+   printf(" for thishandler, the values of each PFkey are shown.  \n");
+   printf("\n");
+   printf(" If PfKeyRepository is not the active handler, activate\n");
+   printf(" it with 'pf set n', where n is the number of the \n");
+   printf(" PfKeyRepository handler shown in with pf list.\n");
+   printf("\n");
+   printf(" You can set a specific key with 'repos addpf <nr> <string>',\n");
+   printf(" where nr is the selected PfKey and string the command \n");
+   printf(" string within quotes. For example 'pf addpf 1 \"? pf\"' \n");
+   printf(" sets pfkey 1 up to trigger the pf help command.\n");
+   printf("\n"); 
 }   
 
 //-------------

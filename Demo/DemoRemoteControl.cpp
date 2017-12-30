@@ -1,9 +1,9 @@
 //-----------------------------------------------------------------------------
-// DemoPresentation.cpp
+// DemoRemoteControl.cpp
 //
 // Copyright (c) 2013-2016 Joep Suijs - All rights reserved.        
 //
-// This demo shows how to use the Presentation class.
+// This demo shows how to handle undefined RC codes.
 //
 // RobotLib tags: DEMO
 //-----------------------------------------------------------------------------
@@ -31,39 +31,48 @@
 //-----------------------------------------------------------------------------
 // tags_end
 //----------------------------------------------------------------------------- 
- 
 
-#define DEMO_NAME DemoPresentation
+#define DEMO_NAME DemoRemoteControl
 
 //-------------
 // OVERVIEW
 //-------------
-/*     
-   The presentation class provides information on the
-   status of the robot for presentation. By default it
-   provides the robot position (x, y and degrees).
-   Additional data can be added. 
-
-   The format of the data is: 
-   [DATA] P_x:4 P_y:0 Hd:0 [/DATA]
-
-   The data is sent to the console port.
+/* 
+   RobotLib allows you to link pre-defined functions to remote 
+   control (RC) buttons. 
+   There are basically three groups of actions:
    
-   When the data is sent, is controlled by mode:
-      0 - Off  (do not print)
-      1 - Auto (print when the robot has moved)
-      2 - On   (print at fixed interval)        
-*/
+   1. Buttons, claimed by Robotlib. These claims are done through defines
+      in Prj_RobotLib_conf.h and handled in RcDispatcher. Amongst these,
+      there are up to 12 programmable function keys (PFKeys) you could use.
+      See the demos on PfKeys for details.
+
+   2. Codes, linked to command strings in the CmdRepository. In Framework.cpp,
+      a number of commands are added for RobotLib and you can add commands
+      to this list.
+
+   3. A custom handler of all 'left-over' codes.
+
+   This demo shows options 2 and 3.   
+   
+   Note: 
+   This mechanism is used to handle one-shot 'button numbers' from 
+   an RC5 remote control, but can used with the same ease to handle
+   button pushes from other sources. Or from a mix of sources
+   as long as the button numbers are unique.
+*/     
 
 //-------------
 // DECLARATIONS 
 //-------------
- 
+
+// No declarations required.
+
 //-------------
 // INSTANCES 
 //-------------
-static int Test0;
-static int Test1;
+
+// No instances required.
 
 //-----------------------------------------------------------------------------            
 // DefaultDemoSetup - 
@@ -71,23 +80,11 @@ static int Test1;
 //-----------------------------------------------------------------------------            
 void DefaultDemoSetup()
 {       
-   printf("DemoSetup for Presentation.\n");  
-   
-   // give test vars a distinctive value
-   Test0 = 12345;
-   Test1 = 98765;
-   
-   // Add tag 'dm' to provide Test0 data. 
-   Presentation.Add("dm", Test0); 
-   
-   // Show only data when robot moves.
-   Presentation.Mode = 1;
-   
-   // Show data once every 100ms                                   
-   Presentation.Interval.SetMs(100);
-                                         
-   // Show configuration
-   Presentation.Dump();   
+   printf("DemoSetup for RemoteControl.\n");
+
+   // add command '?' to repository and 
+   // link it with RC code 5964
+   CmdStringRepository.Add(5964,   "?");
 }
 
 //----------------------------------------------------------------------------- 
@@ -96,33 +93,35 @@ void DefaultDemoSetup()
 //-----------------------------------------------------------------------------            
 void CliCmd_DefaultDemo(int NrParams, TCiParams *P)
 {  
-   printf("Demo command for Presentation.\n");
-
-   if (NrParams == 0) {  
-      printf("Demo <n> (n=0..2) changes dm setup\n");
-      Presentation.Dump();
-      return;   
-   }
-
-   switch(P[0].PInt) { 
-      case 0 : {              
-         printf("Delete dm tag\n");
-         Presentation.Delete("dm");
-         break;
-      }
-      case 1 : {
-         printf("Set dm tag to Test0 (12345)\n");
-         Presentation.Add("dm", Test0);
-         break;
-      }
-      case 2 : {
-         printf("Set dm tag to Test1 (98765)\n");
-         Presentation.Add("dm", Test1);
-         break;
-      }
-   }
-}   
+   printf("Demo command for RemoteControl\n");      
+   printf("Use your remote control & check console for messages\n");   
+}                                
 
 //-------------
 // OTHER CODE 
 //-------------
+
+//-----------------------------------------------------------------------------            
+// RcUserDispatch - This function is called for unused RC codes
+//-----------------------------------------------------------------------------            
+// Parameter: RC code value
+//-----------------------------------------------------------------------------            
+void RcUserDispatch(int Code)
+{
+   printf("RemoteControl: called with RC code %d.\n", Code);   
+   
+   switch(Code) {
+      case 4128: {
+         printf("RemoteControl: Code A received\n");
+         break;
+      }        
+      case 4129: {
+         printf("RemoteControl: Code B received\n");
+         break;
+      }        
+      default : {
+         printf("RemoteControl: Unhandled RC Code %d received\n", Code);
+         break;
+      }                                                
+   }
+}

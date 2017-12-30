@@ -1,9 +1,9 @@
 //-----------------------------------------------------------------------------
-// DemoPresentation.cpp
+// DemoSensorSimulator.cpp
 //
 // Copyright (c) 2013-2016 Joep Suijs - All rights reserved.        
 //
-// This demo shows how to use the Presentation class.
+// This demo shows how to use SensorSimulator.
 //
 // RobotLib tags: DEMO
 //-----------------------------------------------------------------------------
@@ -31,28 +31,16 @@
 //-----------------------------------------------------------------------------
 // tags_end
 //----------------------------------------------------------------------------- 
- 
-
-#define DEMO_NAME DemoPresentation
+S
+#define DEMO_NAME DemoSensorSimulator
 
 //-------------
 // OVERVIEW
 //-------------
-/*     
-   The presentation class provides information on the
-   status of the robot for presentation. By default it
-   provides the robot position (x, y and degrees).
-   Additional data can be added. 
-
-   The format of the data is: 
-   [DATA] P_x:4 P_y:0 Hd:0 [/DATA]
-
-   The data is sent to the console port.
-   
-   When the data is sent, is controlled by mode:
-      0 - Off  (do not print)
-      1 - Auto (print when the robot has moved)
-      2 - On   (print at fixed interval)        
+/*      
+The SensorSimulator provides virtual sensor input. The simulator
+is based on a 'environment' definition of lines. A sensor reports
+the distance to the closed line, based on the robot pose.
 */
 
 //-------------
@@ -61,9 +49,11 @@
  
 //-------------
 // INSTANCES 
-//-------------
-static int Test0;
-static int Test1;
+//-------------                 
+
+TSensorSimulator SimSharpL( 45, 120);  // look to front-left at 45 degrees, 120 mm from center
+TSensorSimulator SimSharpM(  0, 120);  // look straight, 120 mm from robot center
+TSensorSimulator SimSharpR(-45, 120);  // look to front-right at 45 degrees, 120mm from center
 
 //-----------------------------------------------------------------------------            
 // DefaultDemoSetup - 
@@ -71,23 +61,38 @@ static int Test1;
 //-----------------------------------------------------------------------------            
 void DefaultDemoSetup()
 {       
-   printf("DemoSetup for Presentation.\n");  
+   printf("DemoSetup for SensorSimulator.\n");    
    
-   // give test vars a distinctive value
-   Test0 = 12345;
-   Test1 = 98765;
+   // Setup the 'environment'
+   SimulatorTrack.Offset(-400, -400);  // Move track origin relative to robot 
+                                       // position for NEW lines.
+   SimulatorTrack.AddRoboRama();       // load the roborama track
    
-   // Add tag 'dm' to provide Test0 data. 
-   Presentation.Add("dm", Test0); 
+   // Add 3 crosses of 70mm (similar to soda cans) 
+   SimulatorTrack.AddCross(1200, 600, 70);
+   SimulatorTrack.AddCross(1800, 600, 70);
+   SimulatorTrack.AddCross(3000, 600, 70);
    
-   // Show only data when robot moves.
+   // Dump track lines
+   SimulatorTrack.Dump();
+  
+   // Dump track point at group 2 (can be used by RobotPresenter)
+   SimulatorTrack.DumpPoints(2);      
+
+   // Register simulated sensor tasks. The taks will update
+   // the variable 'Distance'. Note that it is good enough 
+   // to call it (only) from MainTaks, but it can be called
+   // each ms too (as required for the sharp sensor).    
+   MainTasks.Add(FP_FNAME(SimSharpL));
+   MainTasks.Add(FP_FNAME(SimSharpM));
+   MainTasks.Add(FP_FNAME(SimSharpR));
+  
+   // report sensor output when moving, through the presentation module
    Presentation.Mode = 1;
+   Presentation.Add("g0", SimSharpL.Distance);
+   Presentation.Add("g1", SimSharpM.Distance);
+   Presentation.Add("g2", SimSharpR.Distance);
    
-   // Show data once every 100ms                                   
-   Presentation.Interval.SetMs(100);
-                                         
-   // Show configuration
-   Presentation.Dump();   
 }
 
 //----------------------------------------------------------------------------- 
@@ -96,31 +101,13 @@ void DefaultDemoSetup()
 //-----------------------------------------------------------------------------            
 void CliCmd_DefaultDemo(int NrParams, TCiParams *P)
 {  
-   printf("Demo command for Presentation.\n");
-
-   if (NrParams == 0) {  
-      printf("Demo <n> (n=0..2) changes dm setup\n");
-      Presentation.Dump();
-      return;   
-   }
-
-   switch(P[0].PInt) { 
-      case 0 : {              
-         printf("Delete dm tag\n");
-         Presentation.Delete("dm");
-         break;
-      }
-      case 1 : {
-         printf("Set dm tag to Test0 (12345)\n");
-         Presentation.Add("dm", Test0);
-         break;
-      }
-      case 2 : {
-         printf("Set dm tag to Test1 (98765)\n");
-         Presentation.Add("dm", Test1);
-         break;
-      }
-   }
+   printf("Demo command for SensorSimulator.\n"); 
+   printf("Use um commands to let the robot drive and see\n");
+   printf("the sensor data in RobotPresenter\n");    
+   
+   printf("Current value of simulated SharpL: %d mm\n", SimSharpL.Distance);
+   printf("Current value of simulated SharpM: %d mm\n", SimSharpM.Distance);
+   printf("Current value of simulated SharpR: %d mm\n", SimSharpR.Distance);
 }   
 
 //-------------

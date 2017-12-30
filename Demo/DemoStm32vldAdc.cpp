@@ -1,9 +1,9 @@
 //-----------------------------------------------------------------------------
-// DemoPresentation.cpp
+// DemoStm32vldAdc.cpp
 //
 // Copyright (c) 2013-2016 Joep Suijs - All rights reserved.        
 //
-// This demo shows how to use the Presentation class.
+// This demo shows how to use ADC on the STM32 Value line discovery board.
 //
 // RobotLib tags: DEMO
 //-----------------------------------------------------------------------------
@@ -31,28 +31,13 @@
 //-----------------------------------------------------------------------------
 // tags_end
 //----------------------------------------------------------------------------- 
- 
 
-#define DEMO_NAME DemoPresentation
+#define DEMO_NAME DemoStm32vldAdc
 
 //-------------
 // OVERVIEW
 //-------------
-/*     
-   The presentation class provides information on the
-   status of the robot for presentation. By default it
-   provides the robot position (x, y and degrees).
-   Additional data can be added. 
-
-   The format of the data is: 
-   [DATA] P_x:4 P_y:0 Hd:0 [/DATA]
-
-   The data is sent to the console port.
-   
-   When the data is sent, is controlled by mode:
-      0 - Off  (do not print)
-      1 - Auto (print when the robot has moved)
-      2 - On   (print at fixed interval)        
+/*
 */
 
 //-------------
@@ -62,8 +47,6 @@
 //-------------
 // INSTANCES 
 //-------------
-static int Test0;
-static int Test1;
 
 //-----------------------------------------------------------------------------            
 // DefaultDemoSetup - 
@@ -71,23 +54,8 @@ static int Test1;
 //-----------------------------------------------------------------------------            
 void DefaultDemoSetup()
 {       
-   printf("DemoSetup for Presentation.\n");  
-   
-   // give test vars a distinctive value
-   Test0 = 12345;
-   Test1 = 98765;
-   
-   // Add tag 'dm' to provide Test0 data. 
-   Presentation.Add("dm", Test0); 
-   
-   // Show only data when robot moves.
-   Presentation.Mode = 1;
-   
-   // Show data once every 100ms                                   
-   Presentation.Interval.SetMs(100);
-                                         
-   // Show configuration
-   Presentation.Dump();   
+   printf("DemoSetup for ADC on STM32 Value Line Discoveryboard.\n");
+   HalAdcInit();
 }
 
 //----------------------------------------------------------------------------- 
@@ -96,31 +64,24 @@ void DefaultDemoSetup()
 //-----------------------------------------------------------------------------            
 void CliCmd_DefaultDemo(int NrParams, TCiParams *P)
 {  
-   printf("Demo command for Presentation.\n");
-
-   if (NrParams == 0) {  
-      printf("Demo <n> (n=0..2) changes dm setup\n");
-      Presentation.Dump();
-      return;   
-   }
-
-   switch(P[0].PInt) { 
-      case 0 : {              
-         printf("Delete dm tag\n");
-         Presentation.Delete("dm");
-         break;
-      }
-      case 1 : {
-         printf("Set dm tag to Test0 (12345)\n");
-         Presentation.Add("dm", Test0);
-         break;
-      }
-      case 2 : {
-         printf("Set dm tag to Test1 (98765)\n");
-         Presentation.Add("dm", Test1);
-         break;
-      }
-   }
+   printf("Demo command for ADC on STM32 Value Line Discoveryboard.\n");   
+      
+   printf("ADC input 00 (pa0): %d\n", HalAdcRead(ADC_Channel_0));
+   printf("ADC input 01 (pa1): %d\n", HalAdcRead(ADC_Channel_1));
+   printf("ADC input 02 (pa2): %d\n", HalAdcRead(ADC_Channel_2));
+   printf("ADC input 03 (pa3): %d\n", HalAdcRead(ADC_Channel_3));
+   printf("ADC input 04 (pa4): %d\n", HalAdcRead(ADC_Channel_4));
+   printf("ADC input 05 (pa5): %d\n", HalAdcRead(ADC_Channel_5));
+   printf("ADC input 06 (pa6): %d\n", HalAdcRead(ADC_Channel_6));
+   printf("ADC input 07 (pa7): %d\n", HalAdcRead(ADC_Channel_7));   
+   printf("ADC input 08 (pb0): %d\n", HalAdcRead(ADC_Channel_8));
+   printf("ADC input 09 (pb1): %d\n", HalAdcRead(ADC_Channel_9));
+   printf("ADC input 10 (pc0): %d\n", HalAdcRead(ADC_Channel_10));
+   printf("ADC input 11 (pc1): %d\n", HalAdcRead(ADC_Channel_11));
+   printf("ADC input 12 (pc2): %d\n", HalAdcRead(ADC_Channel_12));
+   printf("ADC input 13 (pc3): %d\n", HalAdcRead(ADC_Channel_13));
+   printf("ADC input 14 (pc4): %d\n", HalAdcRead(ADC_Channel_14));
+   printf("ADC input 15 (pc5): %d\n", HalAdcRead(ADC_Channel_15));
 }   
 
 //-------------
