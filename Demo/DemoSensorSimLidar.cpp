@@ -32,6 +32,11 @@
 // tags_end
 //----------------------------------------------------------------------------- 
 
+#ifndef USE_RPLIDAR_SIM
+#warning Please define USE_RPLIDAR_SIM to support this demo
+#else
+
+
 #define DEMO_NAME DemoSensorSimLidar
 
 //-------------
@@ -91,3 +96,4 @@ void CliCmd_DefaultDemo(int NrParams, TCiParams *P)
 //-------------
 // OTHER CODE 
 //-------------
+#endif
