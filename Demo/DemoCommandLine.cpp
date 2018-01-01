@@ -40,7 +40,7 @@
 //-------------
 
 // For access from other source files, add prototypes to project.h 
-extern const TCliGroup Cli_Demo;
+extern const TCliGroup CliDemo;
 
 //-------------
 // INSTANCES 
@@ -58,7 +58,7 @@ void DefaultDemoSetup()
    printf("DemoSetup for CommandLine.\n");
 
    // Add our commands to the CLI module
-   CliAddCommands(Cli_Demo, "CliDemo commands"); 
+   CliAddCommands(CliDemo, "CliDemo commands"); 
    
 }
 
@@ -207,7 +207,7 @@ static const t_cli_record CliRecords[] = {
    { 0, "", 0, ""   } // last line has function pointer value 0 
 };
 
-const TCliGroup Cli_Demo = { "xyz", CliRecords};
+const TCliGroup CliDemo = { "xyz", CliRecords};
 
 // Copy to here & update
 
