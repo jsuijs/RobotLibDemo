@@ -1,7 +1,7 @@
 //-----------------------------------------------------------------------------
 // TestUmSim.cpp
 //
-// Copyright (c) 2013-2016 Joep Suijs - All rights reserved.        
+// Copyright (c) 2013-2018 Joep Suijs - All rights reserved.        
 //
 // Not a demo, but a test using the Demo structure.
 // THIS IS A TEST FOR THE SIMULATOR - BE CAREFULL TO RUN IT ON A REAL ROBOT !
@@ -33,6 +33,7 @@
 //-----------------------------------------------------------------------------
 // tags_end
 //----------------------------------------------------------------------------- 
+#include "RobotLib.h"
 
 #define DEMO_NAME TestUmSim
 

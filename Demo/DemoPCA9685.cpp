@@ -1,7 +1,7 @@
 //-----------------------------------------------------------------------------
 // DemoPCA9685.cpp - 8 ch PWM module with i2c interface
 //
-// Copyright (c) 2013-2017 Joep Suijs - All rights reserved.        
+// Copyright (c) 2013-2018 Joep Suijs - All rights reserved.        
 //
 // This demo shows how to use a PCA9685 to control 3 servo's. Up to 16 servo's
 // can be controled by one PCA9685. 
@@ -32,6 +32,7 @@
 //-----------------------------------------------------------------------------
 // tags_end
 //----------------------------------------------------------------------------- 
+#include "RobotLib.h"
 
 #define DEMO_NAME DemoPCA9685
 

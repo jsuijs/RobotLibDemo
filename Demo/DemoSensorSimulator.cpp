@@ -1,7 +1,7 @@
 //-----------------------------------------------------------------------------
 // DemoSensorSimulator.cpp
 //
-// Copyright (c) 2013-2016 Joep Suijs - All rights reserved.        
+// Copyright (c) 2013-2018 Joep Suijs - All rights reserved.        
 //
 // This demo shows how to use SensorSimulator.
 //
@@ -31,6 +31,7 @@
 //-----------------------------------------------------------------------------
 // tags_end
 //----------------------------------------------------------------------------- 
+#include "RobotLib.h"
 
 #define DEMO_NAME DemoSensorSimulator
 
@@ -77,7 +78,7 @@ void DefaultDemoSetup()
    SimulatorTrack.Dump();
   
    // Dump track point at group 2 (can be used by RobotPresenter)
-   SimulatorTrack.DumpPoints(2);      
+//   SimulatorTrack.DumpPoints(2);      
 
    // Register simulated sensor tasks. The taks will update
    // the variable 'Distance'. Note that it is good enough 

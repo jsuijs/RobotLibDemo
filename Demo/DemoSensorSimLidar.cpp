@@ -1,7 +1,7 @@
 //-----------------------------------------------------------------------------
 // DemoSensorSimLidar.cpp
 //
-// Copyright (c) 2013-2017 Joep Suijs - All rights reserved.        
+// Copyright (c) 2013-2018 Joep Suijs - All rights reserved.        
 //
 // This demo shows how to use SensorSimLidar.
 //
@@ -31,6 +31,7 @@
 //-----------------------------------------------------------------------------
 // tags_end
 //----------------------------------------------------------------------------- 
+#include "RobotLib.h"
 
 #ifndef USE_RPLIDAR_SIM
 #warning Please define USE_RPLIDAR_SIM to support this demo

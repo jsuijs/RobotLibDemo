@@ -1,7 +1,7 @@
 //-----------------------------------------------------------------------------
 // TestSensor2.cpp
 //
-// Copyright (c) 2013-2017 Joep Suijs - All rights reserved.        
+// Copyright (c) 2013-2018 Joep Suijs - All rights reserved.        
 //
 // Not a demo, but a test using the Demo structure.
 // This test controls the 'StepperTestRig' to move the target and reports
@@ -33,6 +33,7 @@
 //-----------------------------------------------------------------------------
 // tags_end
 //----------------------------------------------------------------------------- 
+#include "RobotLib.h"
 
 #define DEMO_NAME TestSensor
 

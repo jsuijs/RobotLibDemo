@@ -1,9 +1,9 @@
 //-----------------------------------------------------------------------------
 // DemoZK1.cpp
 //
-// Copyright (c) 2013-2016 Joep Suijs - All rights reserved.        
+// Copyright (c) 2013-2018 Joep Suijs - All rights reserved.        
 //
-// This demo shows how to use XYZ.
+// This demo shows how to use ZolderKamerUitdaging1.
 //
 // RobotLib tags: DEMO
 //-----------------------------------------------------------------------------
@@ -31,6 +31,7 @@
 //-----------------------------------------------------------------------------
 // tags_end
 //----------------------------------------------------------------------------- 
+#include "RobotLib.h"
 
 #define DEMO_NAME DemoZK1
 

@@ -1,7 +1,7 @@
 //-----------------------------------------------------------------------------
 // DemoPFKeyFunction.cpp
 //
-// Copyright (c) 2013-2017 Joep Suijs - All rights reserved.        
+// Copyright (c) 2013-2018 Joep Suijs - All rights reserved.        
 //
 // This demo shows how to use the Programmable Function Keys.
 //
@@ -31,6 +31,7 @@
 //-----------------------------------------------------------------------------
 // tags_end
 //----------------------------------------------------------------------------- 
+#include "RobotLib.h"
 
 #define DEMO_NAME DemoPFKeyFunction
 

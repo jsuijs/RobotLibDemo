@@ -1,7 +1,7 @@
 //-----------------------------------------------------------------------------
 // DemoStm32f4EepromSim.cpp
 //
-// Copyright (c) 2013-2016 Joep Suijs - All rights reserved.        
+// Copyright (c) 2013-2018 Joep Suijs - All rights reserved.        
 //
 // This demo shows how to simulate an eeprom in flash.
 //
@@ -31,7 +31,9 @@
 //-----------------------------------------------------------------------------
 // tags_end
 //----------------------------------------------------------------------------- 
-#warning DEMO IS NOT TESTED! Please report succes or issues.
+#include "RobotLib.h"
+
+#warning DEMO HAS NOT BEEN NOT TESTED! Please report succes or issues.
 
 #define DEMO_NAME DemoEepromSim
 static int _main(void); // required to use STMicro demo (see below)

@@ -1,7 +1,7 @@
 //-----------------------------------------------------------------------------
 // DemoRemoteControl.cpp
 //
-// Copyright (c) 2013-2016 Joep Suijs - All rights reserved.        
+// Copyright (c) 2013-2018 Joep Suijs - All rights reserved.        
 //
 // This demo shows how to handle undefined RC codes.
 //
@@ -31,6 +31,7 @@
 //-----------------------------------------------------------------------------
 // tags_end
 //----------------------------------------------------------------------------- 
+#include "RobotLib.h"
 
 #define DEMO_NAME DemoRemoteControl
 
@@ -84,7 +85,7 @@ void DefaultDemoSetup()
 
    // add command '?' to repository and 
    // link it with RC code 5964
-   CmdStringRepository.Add(5964,   "?");
+   CmdStringRepository.Add(5964, "Help", "?");
 }
 
 //----------------------------------------------------------------------------- 
