@@ -1,6 +1,13 @@
-from tkinter import *
-import tkinter.scrolledtext as tkst
-from tkinter import filedialog
+try:
+   # Python 3.x
+   from tkinter import *
+   import tkinter.scrolledtext as tkst
+   from tkinter import filedialog
+except ImportError:
+   # Python 2.x
+   from Tkinter import *
+   import ScrolledText as tkst
+   import tkFileDialog as filedialog
 
 import os
 import time
@@ -146,8 +153,7 @@ DefaultConfig = {  'MqttIp'      : "127.0.0.1",
 try:
    # load from file & merge with default into ConfigData
    with open('WinMQttTerminalCfg.json', 'r') as fp:
-      FileConfig = json.load(fp)
-      ConfigData = {**DefaultConfig, **FileConfig}
+      ConfigData = json.load(fp)
 
 except:
    # no config => save defaults as (template) config file

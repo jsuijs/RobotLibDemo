@@ -57,7 +57,8 @@ def createToolTip(widget, text):
 
 # MQtt ------------------------------------------------------------------------
 import paho.mqtt.client as mqtt
-import osimport sys
+#import osimport 
+import sys
 
 def on_connect(client, userdata, flags, rc):
    print("Connection returned result: ", rc)
@@ -85,7 +86,6 @@ def LoadCfg() :
    return CfgData
 
 def MQttClient(on_message) :
-
 
    ConfigData = LoadCfg()
 
