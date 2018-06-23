@@ -1,2 +1,3 @@
 *.lst
 *.o
+console/__pycache__/*

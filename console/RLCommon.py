@@ -57,7 +57,7 @@ def createToolTip(widget, text):
 
 # MQtt ------------------------------------------------------------------------
 import paho.mqtt.client as mqtt
-#import osimport 
+import os
 import sys
 
 def on_connect(client, userdata, flags, rc):
@@ -164,7 +164,7 @@ class FrameDecoder():
      		data = stream.decode('iso-8859-1')
       else:
       	data = stream
-      
+
       for char in data:
       	 # SLIP_END
          if char == self.SLIP_END:
