@@ -50,6 +50,7 @@ static void UmSimTest1(int NrParams, TCiParams *P);
 static void UmSimTest2(int NrParams, TCiParams *P);
 static void UmSimTest3(int NrParams, TCiParams *P);
 static void UmSimTest4(int NrParams, TCiParams *P);
+static void UmSimTest5(int NrParams, TCiParams *P);
  
 //-------------
 // INSTANCES 
@@ -82,6 +83,7 @@ void CliCmd_DefaultDemo(int NrParams, TCiParams *P)
       case 2 : UmSimTest2(NrParams, P);   break;           
       case 3 : UmSimTest3(NrParams, P);   break;           
       case 4 : UmSimTest4(NrParams, P);   break;           
+      case 5 : UmSimTest5(NrParams, P);   break;           
       
       default : {
          printf("Invalid UmSimTest number (%d)\n", P[0].PInt);
@@ -280,7 +282,26 @@ static void UmSimTest4(int NrParams, TCiParams *P)
 {
    printf("Test UmArcToPose\n");  
    if (NrParams == 2) { // note: first param == testnr             
-      UmRobotPosition(0, 0, P[1].PInt * 30); // angle in 30 degree steps
+      UmRobotPosition(0, 0, 0); 
+      UmArcToPose(1000, 1000, P[1].PInt, 300, 0);
+   } else {
+      for (int i=0; i<12; i++) {
+         UmRobotPosition(0, 0, 0); // angle in 30 degree steps
+         UmArcToPose(1000, 1000, i * 30, 300, 0);
+      }
+   }
+
+   Mover.List();   
+}
+
+//----------------------------------------------------------------------------- 
+//-----------------------------------------------------------------------------            
+//-----------------------------------------------------------------------------            
+static void UmSimTest5(int NrParams, TCiParams *P) 
+{
+   printf("Test UmArcToPose\n");  
+   if (NrParams == 2) { // note: first param == testnr             
+      UmRobotPosition(0, 0, P[1].PInt); // angle in degrees
       UmArcToPose(1000, 1000, 90, 300, 0);
    } else {
       for (int i=0; i<12; i++) {
