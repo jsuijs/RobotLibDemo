@@ -146,17 +146,20 @@ def AddFigToCanvas(fig):
    return canvas
 
 # FrameDecoder ---------------------------------------------------------------------
-# SLIP decoder by Roman Haefeli (with some modifications)
+# loosely based on SLIP decoder by Roman Haefeli
 # https://github.com/reduzent/pyslip
 class FrameDecoder():
 
    def __init__(self):
-      self.escaped = False
-      self.packet = ''
-      self.SLIP_END = '\xc0'     # dec: 192
-      self.SLIP_ESC = '\xdb'     # dec: 219
-      self.SLIP_ESC_END = '\xdc' # dec: 220
-      self.SLIP_ESC_ESC = '\xdd' # dec: 221
+      self.receiving = False
+      self.escaped   = False
+      self.packet    = ''
+      self.SLIP_END        = '\xc0' # dec: 192
+      self.SLIP_START      = '\xc1' # dec: 193
+      self.SLIP_ESC        = '\xdb' # dec: 219
+      self.SLIP_ESC_END    = '\xdc' # dec: 220
+      self.SLIP_ESC_ESC    = '\xdd' # dec: 221
+      self.SLIP_ESC_START  = '\xde' # dec: 222
 
    def decode(self, stream):
       packetlist = []
@@ -166,44 +169,40 @@ class FrameDecoder():
       	data = stream
 
       for char in data:
-      	 # SLIP_END
-         if char == self.SLIP_END:
-
-            # On top of SLIP: packets need to contain a
-            # readable ASCII char on the first position
-            # (33 ... 126)
-            # This allows to combine frames in a stream with
-            # other data, if a SLIP_END is sent before the
-            # frame and SLIPSTART + LF (or alike) at the end.
-            if (len(self.packet) > 0) and (self.packet[0]  > ' ') and (self.packet[0]  <= '~') :
-               packetlist.append(self.packet)
+         if char == self.SLIP_START:
+            self.receiving = True
+            self.escaped   = False
             self.packet = ''
-         # SLIP_ESC
-         elif char == self.SLIP_ESC:
+            continue
+
+         if self.receiving == False:
+            continue
+
+         if char == self.SLIP_END:
+            packetlist.append(self.packet)
+            self.receiving = False
+            continue
+
+         # Escape flag
+         if char == self.SLIP_ESC:
             self.escaped = True
-         # SLIP_ESC_END
-         elif char == self.SLIP_ESC_END:
-            if self.escaped:
+            continue
+
+         if self.escaped:
+            if char == self.SLIP_ESC_END:
                self.packet += self.SLIP_END
-               self.escaped = False
-            else:
-               self.packet += char
-         # SLIP_ESC_ESC
-         elif char == self.SLIP_ESC_ESC:
-            if self.escaped:
+
+            if char == self.SLIP_ESC_ESC:
                self.packet += self.SLIP_ESC
-               self.escaped = False
-            else:
-               self.packet += char
+
+            if char == self.SLIP_ESC_START:
+               self.packet += self.SLIP_START
+
+            self.escaped = False
+            continue
+
          # all others
-         else:
-            if self.escaped:
-               raise Exception('SLIP Protocol Error')
-               self.packet = ''
-               self.escaped = False
-            else:
-               self.packet += char
-      #self.stream = ''
-      #self.started = False
+         self.packet += char
+
       return (packetlist)
 
