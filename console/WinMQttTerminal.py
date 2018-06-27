@@ -187,17 +187,21 @@ Memo.configure(state='disabled')
 Memo.bind("<Key>", MemoKey)
 
 # buttons
+CbValueFrames  = tk.IntVar()
 BtnQuit     = Button(master, text='Quit',     command=master.quit)
 BtnLogStart = Button(master, text='LogStart', command=LogStart)
 BtnLogEnd   = Button(master, text='LogEnd',   command=LogEnd, state=DISABLED)
 BtnUpload   = Button(master, text='Upload',   command=Uploader)
 BtnPlayer   = Button(master, text='Player',   command=Player)
+BtnFrames   = Checkbutton(master, text='Frames', variable=CbValueFrames, relief='raised')
+BtnFrames.select()
 
 BtnQuit.grid(       row=0, column=0, sticky=W, pady=4)
 BtnLogStart.grid(   row=0, column=1, sticky=W, pady=4)
 BtnLogEnd.grid(     row=0, column=2, sticky=W, pady=4)
 BtnUpload.grid(     row=0, column=3, sticky=W, pady=4)
 BtnPlayer.grid(     row=0, column=4, sticky=W, pady=4)
+BtnFrames.grid(     row=0, column=5, sticky=W, pady=4)
 
 createToolTip(BtnQuit,     "Quit program")
 createToolTip(BtnLogStart, "(Re)start logging")
@@ -207,10 +211,18 @@ createToolTip(BtnPlayer,   "Replay (log)file (publish like received from serial)
 
 # MQTT stuff
 def on_message(client, userdata, message):
+   if CbValueFrames.get() :
+      # show all data
+      FilteredPayload = message.payload
+   else :
+      # do not show frames
+      FilteredPayload = "x"
+
    Memo.configure(state='normal')
-   Memo.insert(END, message.payload)
+   Memo.insert(END, FilteredPayload)
    Memo.see(END)
    Memo.configure(state='disabled')
+
    if LogStart.Flag:
       LogStart.File.write(message.payload)
 

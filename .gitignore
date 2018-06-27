@@ -1,3 +1,5 @@
 *.lst
 *.o
 console/__pycache__/*
+console/*.json
+*.txt
