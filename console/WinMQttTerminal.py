@@ -14,14 +14,19 @@ import time
 import json
 from RLCommon import *    # RobotLib common code
 
+MySlip      = FrameDecoder()  # only for the constants
+
 CmdHistory        = []
 CmdHistoryIx      = -1  # keep trach of where we are, scrolling through history
 CmdSaved          = ""  # the initial line (you might be editing already)
 
 PlayerLines       = []
 PlayerCount       = 0
+
 UploaderLines     = []
 UploaderCount     = 0
+
+FrameFilterState  = 0
 
 def LogStart():
    if LogStart.Flag:
@@ -211,12 +216,57 @@ createToolTip(BtnPlayer,   "Replay (log)file (publish like received from serial)
 
 # MQTT stuff
 def on_message(client, userdata, message):
+   global FrameFilterState
    if CbValueFrames.get() :
       # show all data
       FilteredPayload = message.payload
+      FrameFilterState = 0 # reset state
    else :
-      # do not show frames
-      FilteredPayload = "x"
+      # remote frames (+ CR/LF) from stream
+      FilteredPayload = ""
+      if (sys.version_info > (3, 0)):
+     		InPayLoad = message.payload .decode('iso-8859-1')
+      else:
+      	InPayLoad = message.payload
+
+      while len(InPayLoad) :
+         # do not show frames
+         if   FrameFilterState == 0 :
+            # wait for frame start
+            try :
+               i = InPayLoad.index(MySlip.SLIP_START)
+               FilteredPayload += InPayLoad[:i]
+               InPayLoad = InPayLoad[i:]
+               FrameFilterState = 1
+#               print("0.1 ", i)
+            except :
+               FilteredPayload =  InPayLoad
+               InPayLoad = ""
+#               print("0.2 ")
+               continue
+
+         elif FrameFilterState == 1 :
+            # wait for frame end
+            try :
+               i = InPayLoad.index(MySlip.SLIP_END)
+               InPayLoad = InPayLoad[i+1:]
+               FrameFilterState = 2
+#               print("1.1 ", i)
+            except :
+               InPayLoad = ""
+#               print("1.2 ")
+
+         elif FrameFilterState == 2 :
+            # discard CR
+            InPayLoad = InPayLoad[1:]
+            FrameFilterState = 3
+#            print("2 ", len(InPayLoad))
+
+         else : # FrameFilterState == 3
+            # discard LF
+            InPayLoad = InPayLoad[1:]
+            FrameFilterState = 0
+#            print("3 ", len(InPayLoad))
 
    Memo.configure(state='normal')
    Memo.insert(END, FilteredPayload)
