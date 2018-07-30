@@ -108,6 +108,8 @@ void CliCmd_DefaultDemo(int NrParams, TCiParams *P)
    printf(" the selected PfKey and string the command string within quotes. For example\n");
    printf(" 'pf addpf 1 \"? pf\"' sets pfkey 1 up to trigger the pf help command.\n");
    printf(" \n");
+   printf("But there is more than PF keys in the CmdStringRepository!\n");
+   printf(" Check it out with '? repos' \n");
    printf("\n");
 }
 
