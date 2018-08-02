@@ -51,8 +51,11 @@ extern TLineSensorQtr8a LineSensor;
 //-------------
 TLineSensorQtr8a LineSensor;
 
-TADS1015 Ads1015_0(0x90);
-TADS1015 Ads1015_1(0x92);
+#ifndef ADC_MAX127
+// Not MAX127 => ADS1015
+TADS1015 Ads1015_0(ADS_SDA_I2C_ADDRESS);
+TADS1015 Ads1015_1(ADS_GND_I2C_ADDRESS);
+#endif
 
 //-----------------------------------------------------------------------------
 // DefaultDemoSetup -
@@ -83,19 +86,15 @@ void DefaultDemoSetup()
    // SETUP FOR ADS1015
    //-----------------------------------------------
    // -> link to 8 source integers
-   // -> activate two tasks to update these integers
    //-----------------------------------------------
-   LineSensor.AdcIn[0].SetSrc(Ads1015_0.Value[0]);
-   LineSensor.AdcIn[1].SetSrc(Ads1015_0.Value[1]);
-   LineSensor.AdcIn[2].SetSrc(Ads1015_0.Value[2]);
-   LineSensor.AdcIn[3].SetSrc(Ads1015_0.Value[3]);
-   LineSensor.AdcIn[4].SetSrc(Ads1015_1.Value[0]);
-   LineSensor.AdcIn[5].SetSrc(Ads1015_1.Value[1]);
-   LineSensor.AdcIn[6].SetSrc(Ads1015_1.Value[2]);
-   LineSensor.AdcIn[7].SetSrc(Ads1015_1.Value[3]);
-
-   MsTasks.Add(FP_FNAME(Ads1015_0));
-   MsTasks.Add(FP_FNAME(Ads1015_1));
+   LineSensor.AdcIn[0].SetSrc(Ads1015_0, 0);
+   LineSensor.AdcIn[1].SetSrc(Ads1015_0, 1);
+   LineSensor.AdcIn[2].SetSrc(Ads1015_0, 2);
+   LineSensor.AdcIn[3].SetSrc(Ads1015_0, 3);
+   LineSensor.AdcIn[4].SetSrc(Ads1015_1, 0);
+   LineSensor.AdcIn[5].SetSrc(Ads1015_1, 1);
+   LineSensor.AdcIn[6].SetSrc(Ads1015_1, 2);
+   LineSensor.AdcIn[7].SetSrc(Ads1015_1, 3);
 #endif
 
    // Add linesensor to task list, to have it called in the main loop.
