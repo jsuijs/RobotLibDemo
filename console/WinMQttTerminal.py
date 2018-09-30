@@ -59,7 +59,7 @@ def LogEnd():
    else :
       # not logging => SaveAll
       File = open(ConfigData['LogFile'], "w", encoding="cp1252", errors='ignore')
-      t = Memo.get('1.0') # line 1, position 0 => beginning of text
+      t = Memo.get('1.0', END) # line 1, position 0 => beginning of text
       File.write(t)
       File.close()
       os.startfile(ConfigData['LogFile'])
