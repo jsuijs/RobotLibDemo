@@ -30,23 +30,39 @@ FrameFilterState  = 0
 
 def LogStart():
    if LogStart.Flag:
-     # we're logging => restart (close before open)
-     LogStart.File.close()
-   # not logging => start
-   LogStart.Flag = TRUE
-   BtnLogStart["text"]="LogRestart"
-   BtnLogEnd["state"]='normal'
+      # we're logging => restart (close before open)
+      LogStart.File.close()
+
    # actual start of logging.
    LogStart.File = open(ConfigData['LogFile'],"wb")
+
+   # change (retain) logging state
+   LogStart.Flag = TRUE
+   BtnLogStart["text"]  = "LogRestart"
+   BtnLogEnd["text"]    = "LogEnd"
 
 LogStart.Flag = FALSE # on startup, we're not logging.
 
 def LogEnd():
-   LogStart.Flag = FALSE
-   BtnLogStart["text"]="LogStart"
-   BtnLogEnd["state"]='disabled'
-   LogStart.File.close()
-   os.startfile(ConfigData['LogFile'])
+   if LogStart.Flag:
+      # we're logging => logend
+
+      # save & open file
+      LogStart.File.close()
+      os.startfile(ConfigData['LogFile'])
+
+      # Change to non-logging state
+      LogStart.Flag = FALSE
+      BtnLogStart["text"]  = "LogStart"
+      BtnLogEnd["text"]    = "SaveAll"
+
+   else :
+      # not logging => SaveAll
+      File = open(ConfigData['LogFile'], "w", encoding="cp1252", errors='ignore')
+      t = Memo.get('1.0') # line 1, position 0 => beginning of text
+      File.write(t)
+      File.close()
+      os.startfile(ConfigData['LogFile'])
 
 def Player():
    global PlayerLines
@@ -194,8 +210,8 @@ Memo.bind("<Key>", MemoKey)
 # buttons
 CbValueFrames  = tk.IntVar()
 BtnQuit     = Button(master, text='Quit',     command=master.quit)
-BtnLogStart = Button(master, text='LogStart', command=LogStart)
-BtnLogEnd   = Button(master, text='LogEnd',   command=LogEnd, state=DISABLED)
+BtnLogStart = Button(master, text='LogStart', command=LogStart)   # LogStart doubles as LogRestart
+BtnLogEnd   = Button(master, text='SaveAll',  command=LogEnd)     # LogEnd doubles as SaveAll
 BtnUpload   = Button(master, text='Upload',   command=Uploader)
 BtnPlayer   = Button(master, text='Player',   command=Player)
 BtnFrames   = Checkbutton(master, text='Frames', variable=CbValueFrames, relief='raised')
@@ -225,7 +241,7 @@ def on_message(client, userdata, message):
       # remote frames (+ CR/LF) from stream
       FilteredPayload = ""
       if (sys.version_info > (3, 0)):
-     		InPayLoad = message.payload .decode('iso-8859-1')
+     		InPayLoad = message.payload.decode('iso-8859-1')
       else:
       	InPayLoad = message.payload
 
