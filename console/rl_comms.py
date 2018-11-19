@@ -2,20 +2,35 @@
 
 
 # Configuration file stuff ----------------------------------------------------
-def LoadCfg() :
+def LoadCfg(filename = 'RlCommonCfg.json') :
    # load configuration file
    import json
    try:
-      with open('RlCommonCfg.json', 'r') as fp:
+      with open(filename, 'r') as fp:
          CfgData = json.load(fp)
 
    except:
       # no config => load defaults and & save (template) config file
       print("LoadCfg - file not found, create default")
-      CfgData = { 'SerialPort': '\\\\.\\com3',
-                  'MqttIp'    : "127.0.0.1",
-                  'MqttPort'  : 1883}
-      with open('RlCommonCfg.json', 'w') as fp:
+      CfgData =   {  'MqttIp'       : "127.0.0.1"     ,
+                     'MqttPort'     : 1883            ,
+                     'Bridge' : {
+                        'SerialPort'   : '\\\\.\\com3'   ,
+                        'FrameToMqtt'  : True            ,
+                        'UseMqtt'      : True            ,
+                     },
+                     'Terminal' : {
+                        'PlayerDelay'  : 100  ,
+                        'UploaderDelay': 100
+                     },
+                     'Track' : {
+                        'WinScale'  : 0.20,
+                        'WinSizeX'  : 3800,
+                        'WinSizeY'  : 2600
+                     }
+                  }
+
+      with open(filename, 'w') as fp:
          json.dump(CfgData, fp, sort_keys=True, indent=4)
 
    return CfgData
