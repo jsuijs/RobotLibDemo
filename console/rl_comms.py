@@ -2,7 +2,7 @@
 
 
 # Configuration file stuff ----------------------------------------------------
-def LoadCfg(filename = 'RlCommonCfg.json') :
+def LoadCfg(filename = 'RlCommonCfg9.json') :
    # load configuration file
    import json
    try:
@@ -12,16 +12,17 @@ def LoadCfg(filename = 'RlCommonCfg.json') :
    except:
       # no config => load defaults and & save (template) config file
       print("LoadCfg - file not found, create default")
-      CfgData =   {  'MqttIp'       : "127.0.0.1"     ,
-                     'MqttPort'     : 1883            ,
+      CfgData =   {  'MqttIp'       : "127.0.0.1"        ,
+                     'MqttPort'     : 1883               ,
                      'Bridge' : {
                         'SerialPort'   : '\\\\.\\com3'   ,
                         'FrameToMqtt'  : True            ,
                         'UseMqtt'      : True            ,
                      },
                      'Terminal' : {
-                        'PlayerDelay'  : 100  ,
-                        'UploaderDelay': 100
+                        'PlayerDelay'  : 100             ,
+                        'UploaderDelay': 100             ,
+                        'LogFile'      : "Logfile.txt"   ,
                      },
                      'Track' : {
                         'WinScale'  : 0.20,

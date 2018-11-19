@@ -168,22 +168,7 @@ master.wm_title(os.path.basename(__file__))
 master.columnconfigure(8, weight = 3 )
 master.rowconfigure(1, weight = 3 )
 
-# Default config
-DefaultConfig = { 'MqttIp'       : "127.0.0.1",
-                  'MqttPort'     : 1883,
-                  'PlayerDelay'  : 100,             # line delay in ms
-                  'UploaderDelay': 500,             # line delay in ms
-                  'LogFile'      : "Logfile.txt"}
-try:
-   # load from file & merge with default into ConfigData
-   with open('WinMQttTerminalCfg.json', 'r') as fp:
-      ConfigData = json.load(fp)
-
-except:
-   # no config => save defaults as (template) config file
-   ConfigData = DefaultConfig
-   with open('WinMQttTerminalCfg.json', 'w') as fp:
-      json.dump(ConfigData, fp, sort_keys=True, indent=4)
+ConfigData = rl.LoadCfg("C:\\MyRobot\\arm\\ConsoleShortcuts\\rl_cfg.json")
 
 print("ConfigData:", ConfigData)
 
