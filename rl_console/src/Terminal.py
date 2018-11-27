@@ -1,7 +1,9 @@
 #!/usr/bin/python3
 
-#import rl_comms as rl      # RobotLib common code
-from   .include.rl_gui  import *    # RobotLib common code
+import sys
+sys.path.append('..')
+import include.rl_comms as rl      # RobotLib common code
+from   include.rl_gui  import *    # RobotLib common code
 
 import tkinter.scrolledtext as tkst
 
@@ -30,7 +32,7 @@ def LogStart():
       LogStart.File.close()
 
    # actual start of logging.
-   LogStart.File = open(ConfigData['LogFile'],"wb")
+   LogStart.File = open(ConfigData['Terminal']['LogFile'],"wb")
 
    # change (retain) logging state
    LogStart.Flag = True
@@ -43,7 +45,7 @@ def LogEnd():
       # we're logging => logend
       # save & open file
       LogStart.File.close()
-      os.startfile(ConfigData['LogFile'])
+      os.startfile(ConfigData['Terminal']['LogFile'])
       # Change to non-logging state
       LogStart.Flag = False
       BtnLogStart["text"]  = "LogStart"
@@ -51,7 +53,7 @@ def LogEnd():
 
    else :
       # not logging => SaveAll
-      File = open(ConfigData['LogFile'], "w", encoding="cp1252", errors='ignore')
+      File = open(ConfigData['Terminal']['LogFile'], "w", encoding="cp1252", errors='ignore')
       t = Memo.get('1.0', tk.END) # line 1, position 0 => beginning of text
       File.write(t)
       File.close()
@@ -59,10 +61,10 @@ def LogEnd():
    # launch file
    import platform
    if platform.system() == 'Windows' :
-      os.startfile(ConfigData['LogFile'])
+      os.startfile(ConfigData['Terminal']['LogFile'])
    else :
       import subprocess
-      subprocess.call(["xdg-open", ConfigData['LogFile']])
+      subprocess.call(["xdg-open", ConfigData['Terminal']['LogFile']])
 
 def Player():
    global PlayerLines
@@ -80,7 +82,7 @@ def Uploader():
 
 def PlayerSendLines():
    global PlayerCount
-   master.after(ConfigData['PlayerDelay'], PlayerSendLines)
+   master.after(ConfigData['Terminal']['PlayerDelay'], PlayerSendLines)
    if len(PlayerLines) > 0 :
       Data = PlayerLines.pop(0).encode("cp1252", 'ignore')
       if args.com == None :
@@ -96,7 +98,7 @@ def PlayerSendLines():
 
 def UploaderSendLines():
    global UploaderCount
-   master.after(ConfigData['UploaderDelay'], UploaderSendLines)
+   master.after(ConfigData['Terminal']['UploaderDelay'], UploaderSendLines)
    if len(UploaderLines) > 0 :
       Data = UploaderLines.pop(0).encode("cp1252", 'ignore')
       if args.com == None :
