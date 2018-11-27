@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 
-import rl_comms as rl      # RobotLib common code
-from   rl_gui  import *    # RobotLib common code
+#import rl_comms as rl      # RobotLib common code
+from   .include.rl_gui  import *    # RobotLib common code
 
 import tkinter.scrolledtext as tkst
 
@@ -36,17 +36,14 @@ def LogStart():
    LogStart.Flag = True
    BtnLogStart["text"]  = "LogRestart"
    BtnLogEnd["text"]    = "LogEnd"
-
 LogStart.Flag = False # on startup, we're not logging.
 
 def LogEnd():
    if LogStart.Flag:
       # we're logging => logend
-
       # save & open file
       LogStart.File.close()
       os.startfile(ConfigData['LogFile'])
-
       # Change to non-logging state
       LogStart.Flag = False
       BtnLogStart["text"]  = "LogStart"
@@ -169,6 +166,7 @@ master.columnconfigure(8, weight = 3 )
 master.rowconfigure(1, weight = 3 )
 
 ConfigData = rl.LoadCfg("C:\\MyRobot\\arm\\ConsoleShortcuts\\rl_cfg.json")
+
 
 print("ConfigData:", ConfigData)
 
