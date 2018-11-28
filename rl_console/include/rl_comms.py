@@ -43,7 +43,7 @@ import os
 import sys
 
 class MQttClient():
-   def __init__(self, MqttIp, Topic = "Robotlib/MsgFromRobot"):
+   def __init__(self, MqttIp, Topic = "Robotlib/ComRawRx"):
 
       #create an mqtt client
       mypid = os.getpid()
@@ -52,6 +52,9 @@ class MQttClient():
 
       self.MsgQueue=[]
       self.Topic = Topic;
+      self.PassStream = False # default pass frames from stream.
+
+      self.MySlip = FrameDecoder()  # used when PassStream remains false
 
       #attach MQTT callbacks
       self.mqttc.on_connect = self.on_connect
@@ -64,10 +67,16 @@ class MQttClient():
       self.mqttc.loop_start()   # run mqtt client in separate thread
 
    def on_message(self, client, userdata, message):
-       #print("Received message '" + message.payload.decode("cp1252", 'ignore') + "' on topic '"
-       #    + message.topic + "' with QoS " + str(message.qos))
-       MsgData = message.payload.decode("cp1252", 'ignore')
-       self.MsgQueue.append(MsgData)
+      #print("Received message '" + message.payload.decode("cp1252", 'ignore') + "' on topic '"
+      #    + message.topic + "' with QoS " + str(message.qos))
+      MsgData = message.payload.decode("cp1252", 'ignore')
+      if self.PassStream == True :
+         # queue stream (raw input)
+         self.MsgQueue.append(MsgData)
+      else :
+         # queue frames (decode stream into frames, default)
+         Packets = self.MySlip.decode(message.payload)
+         self.MsgQueue.append(Packets)
 
    def on_connect(self, client, userdata, flags, rc):
       print("Connection returned result: ", rc)
