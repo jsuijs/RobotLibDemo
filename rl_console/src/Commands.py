@@ -1,7 +1,9 @@
 #!/usr/bin/python3
 
-import rl_comms as rl      # RobotLib common code
-from   rl_gui  import *    # RobotLib common code
+import sys
+sys.path.append('..')
+import include.rl_comms as rl      # RobotLib common code
+from   include.rl_gui  import *    # RobotLib common code
 
 # http://www.python-course.eu/tkinter_entry_widgets.php
 import tkinter.scrolledtext as tkst
@@ -10,7 +12,6 @@ import paho.mqtt.client as mqtt
 import os
 import time
 import json
-from RLCommon import *    # RobotLib common code
 
 OutputLines    = []
 
