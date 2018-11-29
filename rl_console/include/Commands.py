@@ -1,9 +1,7 @@
 #!/usr/bin/python3
 
-import sys
-sys.path.append('..')
-import include.rl_comms as rl      # RobotLib common code
-from   include.rl_gui  import *    # RobotLib common code
+import rl_comms as rl      # RobotLib common code
+from   rl_gui  import *    # RobotLib common code
 
 # http://www.python-course.eu/tkinter_entry_widgets.php
 import tkinter.scrolledtext as tkst

@@ -10,8 +10,11 @@ import paho.mqtt.client as mqtt
 import sys
 from time import sleep
 import json
-import rl_comms as rl    # RobotLib common code
 
+#import sys
+#sys.path.append('..')
+import rl_comms as rl      # RobotLib common code
+from   rl_gui  import *    # RobotLib common code
 
 class SerialBridge:
 
@@ -34,6 +37,7 @@ class SerialBridge:
 
       # setup mqtt
       self.MqttClient = rl.MQttClient(self.ConfigData['MqttIp'], "Robotlib/ComRawTx")
+      self.MqttClient.PassStream = True # we want raw data, not frames
       self.MqttClient.mqttc.publish("Robotlib/ComRawRx", "[[SerialBridge started.]]\r\n")
 
       self.MySlip = rl.FrameDecoder()
