@@ -2,7 +2,7 @@
 
 
 # Configuration file stuff ----------------------------------------------------
-def LoadCfg(filename = 'RlCommonCfg9.json') :
+def LoadCfg(filename = 'RlCommonCfg.json') :
    # load configuration file
    import json
    try:

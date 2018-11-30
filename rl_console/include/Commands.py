@@ -71,7 +71,7 @@ T.mark_set("insert", "1.0") # set cursor to first line, column 0 (yeah, 1-based 
 T.bind('<Control-Return>', CtrlEnterKey) # bind function to keystroke
 
 # load generic configuration file
-ConfigData = rl.LoadCfg("C:\\MyRobot\\arm\\ConsoleShortcuts\\rl_cfg.json")
+ConfigData = rl.LoadCfg()
 
 # load program-specific configuration file
 try:

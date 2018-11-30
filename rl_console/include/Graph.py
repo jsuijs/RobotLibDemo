@@ -3,12 +3,9 @@
 Line plot of MQTT data
 ==========================
 """
-# import RobotLib common code
-import sys
-sys.path.append('..')
-import include.rl_comms as rl      # RobotLib common code
-from   include.rl_gui  import *    # RobotLib common code
 
+import rl_comms as rl      # RobotLib common code
+from   rl_gui  import *    # RobotLib common code
 
 import os
 import tkinter as tk
@@ -95,7 +92,7 @@ root.wm_title(os.path.basename(__file__) + " - Data of " + args.msg)
 
 # MQtt ------------------------------------------------------------------------
 # setup & connect MQtt client to receive messages from robot
-ConfigData = rl.LoadCfg("C:\\MyRobot\\arm\\ConsoleShortcuts\\rl_cfg.json")
+ConfigData = rl.LoadCfg()
 mqttc = rl.MQttClient(ConfigData['MqttIp'])
 #-----
 

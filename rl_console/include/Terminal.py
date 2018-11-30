@@ -7,7 +7,6 @@ import tkinter.scrolledtext as tkst
 
 import os
 import time
-import json
 import sys
 
 MySlip            = rl.FrameDecoder()  # only for the constants
@@ -165,7 +164,7 @@ master.wm_title(os.path.basename(__file__))
 master.columnconfigure(8, weight = 3 )
 master.rowconfigure(1, weight = 3 )
 
-ConfigData = rl.LoadCfg("C:\\MyRobot\\arm\\ConsoleShortcuts\\rl_cfg.json")
+ConfigData = rl.LoadCfg()
 
 
 print("ConfigData:", ConfigData)

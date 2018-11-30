@@ -9,7 +9,6 @@ from serial.tools import list_ports
 import paho.mqtt.client as mqtt
 import sys
 from time import sleep
-import json
 
 #import sys
 #sys.path.append('..')
@@ -105,7 +104,7 @@ class SerialBridge:
 if __name__ == "__main__":
 
    # get config data
-   CData  = rl.LoadCfg("C:\\MyRobot\\arm\\ConsoleShortcuts\\rl_cfg.json")
+   CData  = rl.LoadCfg()
 
    # change specific settings here (ROS params)
 

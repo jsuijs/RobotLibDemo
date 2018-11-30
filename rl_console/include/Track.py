@@ -4,8 +4,6 @@ import math
 
 import os
 import time
-import json
-#import RLCommon
 
 import rl_comms as rl      # RobotLib common code
 from   rl_gui  import *    # RobotLib common code
@@ -350,7 +348,7 @@ def UpdateStatusBar():
 
 if __name__ == "__main__":
 
-   ConfigData = rl.LoadCfg("C:\\MyRobot\\arm\\ConsoleShortcuts\\rl_cfg.json")
+   ConfigData = rl.LoadCfg()
 
    # setup window / screen
    master = tk.Tk()
