@@ -301,7 +301,7 @@ class MyScreen(tk.Frame):
       # remove (for  our purpose) irrelevant chars
       InString = InString.replace(",", " ")     # allow for comma separate x,y
       InString = InString.replace(" +", " ")    # remove multple spaces
-      fields   = InString.split(' ')             # space separted
+      fields   = InString.split()               # whitespace separted
 
       try:
          if fields[1] == "Erase" :
@@ -364,7 +364,8 @@ if __name__ == "__main__":
       if len(mqttc.MsgQueue) > 0 :
          while len(mqttc.MsgQueue) > 0 :
             Message = mqttc.MsgQueue.pop(0)
-            fields = Message.split(' ')             # space separated
+            fields = Message.split()             # whitespace separated
+            print("msg: ", Message, "fields:", fields)
 
             #---------------
             # POSITION message

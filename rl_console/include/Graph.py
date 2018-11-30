@@ -104,7 +104,7 @@ def DataTakt():
       # process messages
       while len(mqttc.MsgQueue) > 0 :
          Message = mqttc.MsgQueue.pop(0)
-         fields = Message.split(' ')             # space separated
+         fields = Message.split()             # whitespace separated
          if (fields[0] == args.msg) :
             print("msg:", len(fields), fields)
 
