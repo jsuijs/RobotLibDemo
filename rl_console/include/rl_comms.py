@@ -16,7 +16,6 @@ def LoadCfg(filename = 'RlCommonCfg.json') :
                      'MqttPort'     : 1883               ,
                      'Bridge' : {
                         'SerialPort'   : '\\\\.\\com3'   ,
-                        'FrameToMqtt'  : True            ,
                         'UseMqtt'      : True            ,
                      },
                      'Terminal' : {

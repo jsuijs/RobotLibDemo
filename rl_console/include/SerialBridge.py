@@ -65,13 +65,6 @@ class SerialBridge:
                if self.ConfigData['Bridge']['UseMqtt'] :
                   self.MqttClient.mqttc.publish("Robotlib/ComRawRx", line)
 
-                  # frame decoder build in
-                  if self.ConfigData['Bridge']['FrameToMqtt'] :
-                     Packets = self.MySlip.decode(line)
-                     for Packet in Packets:
-                        #print(Packet)
-                        self.MqttClient.mqttc.publish("Robotlib/MsgFromRobot", Packet)
-
                if 0 :   # print *also* to stdout
                   if (sys.version_info > (3, 0)):
                      print(line.decode("cp1252", 'ignore'), end='')
