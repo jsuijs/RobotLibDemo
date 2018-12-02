@@ -1,4 +1,6 @@
-#!/usr/bin/env python
+#!/usr/bin/python3
+
+#### #!/usr/bin/env python
 from __future__ import print_function
 
 # sudo apt-get install python-serial
@@ -57,7 +59,7 @@ class SerialBridge:
             # 2. it allows for more char to arrive during high load, so
             #    less (but larger) MQTT messages are required (which seems
             #    to provide better performance on the broker/receiving end).
-            sleep(0.05)
+            sleep(0.01)
             if  self.ser.inWaiting() > 0:
                line = self.ser.read(self.ser.inWaiting())
 
@@ -65,11 +67,11 @@ class SerialBridge:
                if self.ConfigData['Bridge']['UseMqtt'] :
                   self.MqttClient.mqttc.publish("Robotlib/ComRawRx", line)
 
-               if 0 :   # print *also* to stdout
+               if 1 :   # print *also* to stdout
                   if (sys.version_info > (3, 0)):
-                     print(line.decode("cp1252", 'ignore'), end='')
+                     print(line.decode("cp1252", 'ignore'))
                   else:
-                     print(line, end='')
+                     print(line)
                   sys.stdout.flush()
 
             # process message from Mqtt to Serial
@@ -77,6 +79,14 @@ class SerialBridge:
                Message = self.MqttClient.MsgQueue.pop(0)
                self.ser.write(Message.encode("cp1252"))
                self.ser.flush()
+
+               if 1 :   # print *also* to stdout
+                  #if (sys.version_info > (3, 0)):
+                  print(">\n" + Message)
+                  #else:
+                  #   print("aaa" + daa + Message)
+                  sys.stdout.flush()
+
          pass # end of main loop
 
       # handle app closure
