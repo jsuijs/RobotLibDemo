@@ -15,12 +15,14 @@ from time import sleep
 #import sys
 #sys.path.append('..')
 import rl_comms as rl      # RobotLib common code
-from   rl_gui  import *    # RobotLib common code
+#from   rl_gui  import *    # RobotLib common code
 
 class SerialBridge:
 
    def __init__(self, CoData):
       self.ConfigData = CoData
+      self.UseAltChannel = 0  # default, do not post on alternative channel
+      self.AltChannel = []
 
       # Open serial port
       try:
@@ -50,44 +52,52 @@ class SerialBridge:
       print("Cleaning up done.")
 
    def main(self) :
-      try:  # start of main loop
+      while 1 :  # start of main loop
+         takt
 
-         #read data from serial and publish
-         while 1 :
-            # this delay has 2 purposes:
-            # 1. it reduces cpu load when idle
-            # 2. it allows for more char to arrive during high load, so
-            #    less (but larger) MQTT messages are required (which seems
-            #    to provide better performance on the broker/receiving end).
-            sleep(0.01)
-            if  self.ser.inWaiting() > 0:
-               line = self.ser.read(self.ser.inWaiting())
+   def takt(self) :
 
-               # post on Mqtt
-               if self.ConfigData['Bridge']['UseMqtt'] :
-                  self.MqttClient.mqttc.publish("Robotlib/ComRawRx", line)
+      #read data from serial and publish
+      try :
+         # this delay has 2 purposes:
+         # 1. it reduces cpu load when idle
+         # 2. it allows for more char to arrive during high load, so
+         #    less (but larger) MQTT messages are required (which seems
+         #    to provide better performance on the broker/receiving end).
+         sleep(0.01)
+         if  self.ser.inWaiting() > 0:
+            line = self.ser.read(self.ser.inWaiting())
 
-               if 1 :   # print *also* to stdout
-                  if (sys.version_info > (3, 0)):
-                     print(line.decode("cp1252", 'ignore'))
-                  else:
-                     print(line)
-                  sys.stdout.flush()
+            # post on Mqtt
+            if self.ConfigData['Bridge']['UseMqtt'] :
+               self.MqttClient.mqttc.publish("Robotlib/ComRawRx", line)
 
-            # process message from Mqtt to Serial
-            while len(self.MqttClient.MsgQueue) :
-               Message = self.MqttClient.MsgQueue.pop(0)
-               self.ser.write(Message.encode("cp1252"))
-               self.ser.flush()
+            if self.UseAltChannel :
+               Packets = self.MySlip.decode(line)
+               self.AltChannel = self.AltChannel + Packets
+               print(Packets)
 
-               if 1 :   # print *also* to stdout
-                  #if (sys.version_info > (3, 0)):
-                  print(">\n" + Message)
-                  #else:
-                  #   print("aaa" + daa + Message)
-                  sys.stdout.flush()
 
-         pass # end of main loop
+            if 1 :   # print *also* to stdout
+               if (sys.version_info > (3, 0)):
+                  print(line.decode("cp1252", 'ignore'))
+               else:
+                  print(line)
+               sys.stdout.flush()
+
+         # process message from Mqtt to Serial
+         while len(self.MqttClient.MsgQueue) :
+            Message = self.MqttClient.MsgQueue.pop(0)
+            self.ser.write(Message.encode("cp1252"))
+            self.ser.flush()
+
+            if 1 :   # print *also* to stdout
+               #if (sys.version_info > (3, 0)):
+               print(">\n" + Message)
+               #else:
+               #   print("aaa" + daa + Message)
+               sys.stdout.flush()
+
 
       # handle app closure
       except (KeyboardInterrupt):
