@@ -53,7 +53,7 @@ class SerialBridge:
 
    def main(self) :
       while 1 :  # start of main loop
-         takt
+         self.takt()
 
    def takt(self) :
 
