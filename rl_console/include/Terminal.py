@@ -42,7 +42,10 @@ def LogEnd():
       # we're logging => logend
       # save & open file
       LogStart.File.close()
-      os.startfile(ConfigData['Terminal']['LogFile'])
+#      os.startfile(ConfigData['Terminal']['LogFile'])
+      import subprocess
+      subprocess.Popen(['xdg-open', ConfigData['Terminal']['LogFile']])
+
       # Change to non-logging state
       LogStart.Flag = False
       BtnLogStart["text"]  = "LogStart"
@@ -218,17 +221,19 @@ createToolTip(BtnPlayer,   "Replay (log)file (publish like received from serial)
 # MQTT stuff
 def on_message(client, userdata, message):
    global FrameFilterState
+
+   if (sys.version_info > (3, 0)):
+      InPayLoad = message.payload.decode('iso-8859-1')
+   else:
+      InPayLoad = message.payload
+
    if CbValueFrames.get() :
       # show all data
-      FilteredPayload = message.payload
+      FilteredPayload  = InPayLoad
       FrameFilterState = 0 # reset state
    else :
       # remote frames (+ CR/LF) from stream
       FilteredPayload = ""
-      if (sys.version_info > (3, 0)):
-         InPayLoad = message.payload.decode('iso-8859-1')
-      else:
-         InPayLoad = message.payload
 
       while len(InPayLoad) :
          # do not show frames
@@ -269,11 +274,14 @@ def on_message(client, userdata, message):
             FrameFilterState = 0
 #            print("3 ", len(InPayLoad))
 
+   if os.name == 'posix' :
+      FilteredPayload = FilteredPayload.replace('\r', '')
+
    Memo.configure(state='normal')
    Memo.insert(tk.END, FilteredPayload)
    Memo.configure(state='disabled')
    Memo.see(tk.END) # see before configure sometimes flashes memo empty on linux...
-   print("FilteredPayload", FilteredPayload)
+   #print("FilteredPayload", FilteredPayload)
 
    if LogStart.Flag:
       LogStart.File.write(message.payload)
