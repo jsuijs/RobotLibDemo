@@ -40,11 +40,8 @@ LogStart.Flag = False # on startup, we're not logging.
 def LogEnd():
    if LogStart.Flag:
       # we're logging => logend
-      # save & open file
+      # save
       LogStart.File.close()
-#      os.startfile(ConfigData['Terminal']['LogFile'])
-      import subprocess
-      subprocess.Popen(['xdg-open', ConfigData['Terminal']['LogFile']])
 
       # Change to non-logging state
       LogStart.Flag = False
