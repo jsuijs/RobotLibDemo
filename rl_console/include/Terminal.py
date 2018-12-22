@@ -98,6 +98,7 @@ def UploaderSendLines():
    master.after(ConfigData['Terminal']['UploaderDelay'], UploaderSendLines)
    if len(UploaderLines) > 0 :
       Data = UploaderLines.pop(0).encode("cp1252", 'ignore')
+      Data = Data.replace(b'\n', b'\r')   # crlf on windows translates to \n, but robotlib expects \r (enter)
       if args.com == None :
          # no com-port => mqtt
          mqttc.publish("Robotlib/ComRawTx", Data)
