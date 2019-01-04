@@ -278,7 +278,7 @@ def on_message(client, userdata, message):
    Memo.configure(state='normal')
    Memo.insert(tk.END, FilteredPayload)
    Memo.configure(state='disabled')
-   Memo.see(tk.END) # see before configure sometimes flashes memo empty on linux...
+   Memo.see(tk.END) # Memo.see before Memo.configure sometimes flashes memo empty on linux...
    #print("FilteredPayload", FilteredPayload)
 
    if LogStart.Flag:
