@@ -58,16 +58,19 @@ def ClickPause():
    PauseFlag *= -1
 
 def ClickExport():
-   FileName = tk.filedialog.asksaveasfilename(defaultextension=".txt")
-   if FileName:
-      print("Export to " + FileName)
-      # get list of columns
-      MyData = []
-      for MyLine in lines :
-         if len(MyLine.get_ydata()) > 0 :
-            MyData.append(MyLine.get_ydata().tolist())
 
-      if len(MyData) > 0:
+   # get list of columns
+   MyData = []
+   for MyLine in lines :
+      if len(MyLine.get_ydata()) > 0 :
+         MyData.append(MyLine.get_ydata().tolist())
+
+   if len(MyData) > 0:
+      # there is data to export...
+      FileName = tk.filedialog.asksaveasfilename(defaultextension=".txt")
+      if FileName:
+         print("Export to " + FileName)
+
          # collect rows & write them to file
          f = open(FileName, 'w')
          while len(MyData[0]) > 0:
@@ -76,10 +79,11 @@ def ClickExport():
                Row.append(Col.pop(0))
             f.write('\t'.join(map(str,Row)) + '\n')
          f.close()
+         print("Export done")
       else:
-         print("No data to export")
+         print("Export canceled")
    else:
-      print("Export canceled")
+      print("No data to export")
 
 #------------------------------------------------------------------------------
 # create parser

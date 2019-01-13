@@ -1,7 +1,7 @@
 //-----------------------------------------------------------------------------
 // DemoDebugPrint.cpp
 //
-// Copyright (c) 2013-2018 Joep Suijs - All rights reserved.
+// Copyright (c) 2013-2019 Joep Suijs - All rights reserved.
 //
 // This demo shows how to use various print functions for debugging.
 //

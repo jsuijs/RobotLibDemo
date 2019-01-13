@@ -55,6 +55,26 @@ def ClickPause():
    global PauseFlag
    PauseFlag *= -1
 
+def ClickExport():
+   if len(ax.lines) > 0 :
+      FileName = tk.filedialog.asksaveasfilename(defaultextension=".txt")
+      if FileName:
+         print("Export to " + FileName)
+         MyData = ax.lines # get list of 2d datapoint lists (with one point each)
+
+         # collect rows & write them to file
+         f = open(FileName, 'w')
+         for point in MyData :
+            x = point.get_xdata(orig=True)[0]   # get the only element from the list
+            y = point.get_ydata(orig=True)[0]
+            f.write(str(x) + '\t' + str(y) + '\n')
+         f.close()
+         print("Export done")
+      else:
+         print("Export canceled")
+   else:
+      print("No data to export")
+
 #------------------------------------------------------------------------------
 # create parser
 import argparse
@@ -107,7 +127,7 @@ BBar.pack(fill=tk.X, padx=5, pady=5)
 tk.Button(master=BBar, text='Quit',  command=quit        ).pack(side=tk.LEFT)
 tk.Button(master=BBar, text='Clear', command=ClickClear  ).pack(side=tk.LEFT)
 tk.Button(master=BBar, text='Pause', command=ClickPause  ).pack(side=tk.LEFT)
-#tk.Button(master=BBar, text='Save'                       ).pack(side=tk.LEFT)
+tk.Button(master=BBar, text='Export', command=ClickExport).pack(side=tk.LEFT)
 
 canvas = AddFigToCanvas(fig)
 
