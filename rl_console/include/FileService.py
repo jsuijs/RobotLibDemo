@@ -1,0 +1,184 @@
+#!/usr/bin/python3
+
+import rl_comms as rl      # RobotLib common code
+from   rl_gui  import *    # RobotLib common code
+
+import tkinter.scrolledtext as tkst
+
+import os
+import time
+import sys
+
+MessageBuffer = []
+
+# def LogStart():
+#    if LogStart.Flag:
+#       # we're logging => restart (close before open)
+#       LogStart.File.close()
+#
+#    # actual start of logging.
+#    LogStart.File = open(ConfigData['Terminal']['LogFile'],"wb")
+#
+#    # change (retain) logging state
+#    LogStart.Flag = True
+#    BtnLogStart["text"]  = "LogRestart"
+#    BtnLogEnd["text"]    = "LogEnd"
+# LogStart.Flag = False # on startup, we're not logging.
+#
+# def LogEnd():
+#    if LogStart.Flag:
+#       # we're logging => logend
+#       # save
+#       LogStart.File.close()
+#
+#       # Change to non-logging state
+#       LogStart.Flag = False
+#       BtnLogStart["text"]  = "LogStart"
+#       BtnLogEnd["text"]    = "SaveAll"
+#
+#    else :
+#       # not logging => SaveAll
+#       File = open(ConfigData['Terminal']['LogFile'], "w", encoding="cp1252", errors='ignore')
+#       t = Memo.get('1.0', tk.END) # line 1, position 0 => beginning of text
+#       File.write(t)
+#       File.close()
+#
+#    # launch file
+#    import platform
+#    if platform.system() == 'Windows' :
+#       os.startfile(ConfigData['Terminal']['LogFile'])
+#    else :
+#       import subprocess
+#       subprocess.call(["xdg-open", ConfigData['Terminal']['LogFile']])
+#
+
+def MemoAdd(data) :
+   print("MemoAdd:", data)
+   Memo.configure(state='normal')
+   Memo.insert(tk.END, data)
+   Memo.configure(state='disabled')
+   Memo.see(tk.END) # Memo.see before Memo.configure sometimes flashes memo empty on linux...
+
+def Load() :
+   global MessageBuffer
+   CbValueUpdate.set(False)
+   file_path = tk.filedialog.askopenfilename()
+   if file_path != "":
+      with open(file_path, encoding="cp1252", errors='ignore') as f:
+          MessageBuffer = f.readlines()
+      MemoAdd("Load " + file_path)
+      MessageBuffer = [x.strip() for x in MessageBuffer]
+      LabelCurrentFile['text'] = file_path
+   #print(MessageBuffer)
+
+def Send() :
+   MemoAdd("button Send\n")
+
+def Export() :
+   MemoAdd("button Export\n")
+
+
+#------------------------------------------------------------------------------
+root = tk.Tk()
+root.wm_title(os.path.basename(__file__))
+
+# resize stuff
+root.columnconfigure(8, weight = 3 )
+root.rowconfigure(1, weight = 3 )
+
+# MQtt ------------------------------------------------------------------------
+# setup & connect MQtt client to receive messages from robot
+ConfigData = rl.LoadCfg()
+mqttc = rl.MQttClient(ConfigData['MqttIp'])
+#-----
+
+# nr of bytes input
+tk.Label(root, text="Bytes").grid(row=0, column=4)
+BytesInput = tk.Entry(root, width=3)
+BytesInput.grid(row=0, column=5)
+BytesInput.insert(0, 2)
+createToolTip(BytesInput,  "Bytes per value (1, 2 or 4, for export)")
+
+# nr of fields input
+tk.Label(root, text="Fields").grid(row=0, column=6)
+FieldsInput = tk.Entry(root, width=3)
+FieldsInput.grid(row=0, column=7)
+FieldsInput.insert(0, 2)
+createToolTip(FieldsInput,  "Values per line (for export)")
+
+def MemoKey(event):
+   if (event.char != '') :
+      pass
+      # printable character in memo field => focus to LineInput
+      # (non-printable chars like control, shift, cursor movements
+      #  and ctrl-c are valid on the memo window for text selection)
+
+tk.Label(root, text="Robot name: ").grid(  row=1, column=0,  columnspan=2, sticky=(tk.W))
+tk.Label(root, text="Current file: ").grid(row=2, column=0,  columnspan=2, sticky=(tk.W))
+LabelRobotName    = tk.Label(root, text="aap noot")
+LabelCurrentFile  = tk.Label(root, text="aap noot")
+LabelRobotName.grid(    row=1, column=2,  columnspan=7, sticky=(tk.W))
+LabelCurrentFile.grid(  row=2, column=2,  columnspan=7, sticky=(tk.W))
+
+# text output window
+Memo = tkst.ScrolledText(root, height=24, width=80, wrap="none")
+Memo.grid(row=3, column=0, columnspan=9, sticky=(tk.N, tk.E, tk.S, tk.W))
+Memo.configure(state='disabled')
+Memo.bind("<Key>", MemoKey)
+
+# buttons
+CbValueUpdate  = tk.IntVar()
+BtnUpdate      = tk.Checkbutton(root, text='Update', variable=CbValueUpdate, relief='raised')
+BtnLoad        = tk.Button(root, text='Load',    command=Load)
+BtnSend        = tk.Button(root, text='Send',    command=Send)
+BtnExport      = tk.Button(root, text='Export',  command=Export)
+BtnUpdate.select()
+
+BtnUpdate.grid(row=0, column=0, sticky=tk.W, pady=4)
+BtnLoad.grid(  row=0, column=1, sticky=tk.W, pady=4)
+BtnSend.grid(  row=0, column=2, sticky=tk.W, pady=4)
+BtnExport.grid(row=0, column=3, sticky=tk.W, pady=4)
+
+createToolTip(BtnUpdate,"Update memory with received frames")
+createToolTip(BtnLoad,  "Load file from disk into memory")
+createToolTip(BtnSend,  "Send file from memory to robot")
+createToolTip(BtnExport,"Export (convert) file from memory to disk")
+
+
+def DataTakt():
+   #print("DataTakt")
+
+   global PauseFlag, ScreenUpdate
+
+   # process messages
+   while len(mqttc.MsgQueue) > 0 :
+      Message = mqttc.MsgQueue.pop(0)
+      fields = Message.split()             # whitespace separated
+      if fields[0] == "STAMP" :
+         print("msg:", len(fields), fields)
+         LabelRobotName['text'] = fields[1]
+         if fields[2] == "2017-01-01" :
+            MemoAdd("Send time\n")
+
+#            global NrOfPoints
+#            #print("d ", NrOfPoints, len(lines[0].get_xdata()), len(lines[0].get_ydata()))
+#            MyLines = list(lines) # copy list
+#            for field in fields[1:] :
+#               # assign each value to its corresponding line. Should work with
+#               # any number of lines. So plot command at the top determins the max
+#               # number of graphs shown.
+#               try :
+#                  MyLine = MyLines.pop(0)
+#                  FieldValue = float(field)
+#                  MyLine.set_xdata(np.append(MyLine.get_xdata(), NrOfPoints))
+#                  MyLine.set_ydata(np.append(MyLine.get_ydata(), FieldValue))
+#               except:
+#                  pass
+
+   root.after(100, DataTakt)
+   # end of DataTakt
+
+
+# drive GUI
+root.after(1000, DataTakt)
+tk.mainloop()
