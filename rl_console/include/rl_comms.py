@@ -77,7 +77,7 @@ class MQttClient():
          Packets = self.MySlip.decode(message.payload)
          if len(Packets):
             self.MsgQueue.extend(Packets)
-            print(Packets)
+            #print(Packets)
 
    def on_connect(self, client, userdata, flags, rc):
       print("Connection returned result: ", rc)

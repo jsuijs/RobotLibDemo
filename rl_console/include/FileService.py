@@ -8,6 +8,7 @@ import tkinter.scrolledtext as tkst
 import os
 import time
 import sys
+import datetime
 
 MessageBuffer = []
 
@@ -158,7 +159,27 @@ def DataTakt():
          print("msg:", len(fields), fields)
          LabelRobotName['text'] = fields[1]
          if fields[2] == "2017-01-01" :
-            MemoAdd("Send time\n")
+            # clockset  dd mm yyyy hh mm ss - set clock date & time
+            Data = datetime.datetime.now().strftime("clockset %d %m %Y %H %M %S\r")
+            MemoAdd("Send time: " + Data  + "\n")
+            mqttc.mqttc.publish("Robotlib/ComRawTx", Data)
+         continue
+
+      if fields[0] == "FILE" :
+         if fields[1] == "FCB" :
+            MemoAdd("Backup file '" + fields[2] + "' (" + fields[3] + " blocks)\n")
+            continue
+
+         if fields[1] == "IMG" :
+            print("File IMG msg")
+            continue
+
+         if fields[1] == "BLK" :
+            print("File BLK msg")
+            continue
+
+         MemoAdd("Invalid FILE message subtype: " + fields[1] + "\n")
+         continue
 
 #            global NrOfPoints
 #            #print("d ", NrOfPoints, len(lines[0].get_xdata()), len(lines[0].get_ydata()))
