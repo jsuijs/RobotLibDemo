@@ -27,6 +27,9 @@ def LoadCfg(filename = 'RlCommonCfg.json') :
                         'WinScale'  : 0.20,
                         'WinSizeX'  : 3800,
                         'WinSizeY'  : 2600
+                     },
+                     'FileService' : {
+                        'FileRoot'  : 'C:\\RobotFiles'
                      }
                   }
 

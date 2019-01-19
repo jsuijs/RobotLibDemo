@@ -1,4 +1,7 @@
 #!/usr/bin/python3
+# -*- coding: cp1252 -*-
+# set encoding to allow 'slip' chars like
+# ÁFILE  FCB aap 11À
 
 import rl_comms as rl      # RobotLib common code
 from   rl_gui  import *    # RobotLib common code
@@ -9,6 +12,8 @@ import os
 import time
 import sys
 import datetime
+import glob
+import ntpath
 
 MessageBuffer = []
 
@@ -53,7 +58,16 @@ MessageBuffer = []
 #       subprocess.call(["xdg-open", ConfigData['Terminal']['LogFile']])
 #
 
+def FilePath() :
+   return ConfigData['FileService']['FileRoot'] + "\\" + LabelRobotName['text']
+
+def DisableUpdate() :
+   if CbValueUpdate.get() :
+      MemoAdd("Disable update")
+   CbValueUpdate.set(False)
+
 def MemoAdd(data) :
+   data = str(data).rstrip() + "\n"
    print("MemoAdd:", data)
    Memo.configure(state='normal')
    Memo.insert(tk.END, data)
@@ -62,8 +76,10 @@ def MemoAdd(data) :
 
 def Load() :
    global MessageBuffer
-   CbValueUpdate.set(False)
-   file_path = tk.filedialog.askopenfilename()
+
+   DisableUpdate()
+
+   file_path = tk.filedialog.askopenfilename(initialdir=FilePath())
    if file_path != "":
       with open(file_path, encoding="cp1252", errors='ignore') as f:
           MessageBuffer = f.readlines()
@@ -73,7 +89,16 @@ def Load() :
    #print(MessageBuffer)
 
 def Send() :
+   global MessageBuffer
+
+   DisableUpdate()
+
    MemoAdd("button Send\n")
+   for msg in MessageBuffer:
+      msg = '\xc1' + msg + '\xc0'   # add framing (but not yet escaping for binary files...)
+      print(msg)
+      mqttc.mqttc.publish("Robotlib/ComRawTx", msg.encode("cp1252"))
+      time.sleep(0.15)  # Delays in seconds.
 
 def Export() :
    MemoAdd("button Export\n")
@@ -116,7 +141,7 @@ def MemoKey(event):
 
 tk.Label(root, text="Robot name: ").grid(  row=1, column=0,  columnspan=2, sticky=(tk.W))
 tk.Label(root, text="Current file: ").grid(row=2, column=0,  columnspan=2, sticky=(tk.W))
-LabelRobotName    = tk.Label(root, text="aap noot")
+LabelRobotName    = tk.Label(root, text=".")
 LabelCurrentFile  = tk.Label(root, text="aap noot")
 LabelRobotName.grid(    row=1, column=2,  columnspan=7, sticky=(tk.W))
 LabelCurrentFile.grid(  row=2, column=2,  columnspan=7, sticky=(tk.W))
@@ -146,10 +171,64 @@ createToolTip(BtnSend,  "Send file from memory to robot")
 createToolTip(BtnExport,"Export (convert) file from memory to disk")
 
 
+#------------------------------------------------------------------------------
+
+def SaveMsgToFile(FileRoot, FileName, FileData) :
+
+   FileName = FileName.lower()
+   Full1 = FileRoot + "\\" + FileName + ".mfsm"    # MicroFileSystem Message
+   FileList = glob.glob(Full1)
+   #print(Full1, FileList)
+
+   if FileList != []:
+      # file exists -> backup first
+      print("Backup old file")
+      Full2 = FileRoot + "\\" + FileName + "_???.bak"    # Backup, with underscore and 3 digit number
+      FileList = glob.glob(Full2)
+      #print(Full2, FileList)
+
+      BnList = [] # BaseName of all files (no path)
+      for fn in FileList:
+         bn = ntpath.basename(fn.lower())
+         BnList.append(bn)
+         #print("## ", fn, "-", bn)
+
+      #print(BnList)
+
+      # get first unused versioned name
+      Version =  1
+      while True:
+         NewName = "{0}_{1:0=3d}.bak".format(FileName, Version)
+         if not NewName in BnList :
+            break;
+         Version += 1
+
+      NewName = FileRoot + "\\" + NewName    # MicroFileSystem Backup, with underscore and 3 digit number
+      #print(Full1, NewName)
+      os.rename(Full1, NewName)
+      MemoAdd("Old file renamed to '" + NewName + "'.")
+
+   print("Save")
+
+   try:
+      fh = open(Full1,"w")
+   except:
+      MemoAdd("Error opening file '" + Full1 + "' for write.")
+      MemoAdd(sys.exc_info()[1])
+      return
+
+   for l in FileData :
+      fh.write(l + '\n')
+   fh.close()
+   MemoAdd("File '" + Full1 + "' saved.")
+
+#------------------------------------------------------------------------------
+
+
 def DataTakt():
    #print("DataTakt")
 
-   global PauseFlag, ScreenUpdate
+#   global PauseFlag, ScreenUpdate
 
    # process messages
    while len(mqttc.MsgQueue) > 0 :
@@ -161,24 +240,50 @@ def DataTakt():
          if fields[2] == "2017-01-01" :
             # clockset  dd mm yyyy hh mm ss - set clock date & time
             Data = datetime.datetime.now().strftime("clockset %d %m %Y %H %M %S\r")
-            MemoAdd("Send time: " + Data  + "\n")
+            MemoAdd("Send time: " + Data)
             mqttc.mqttc.publish("Robotlib/ComRawTx", Data)
          continue
 
       if fields[0] == "FILE" :
          if fields[1] == "FCB" :
-            MemoAdd("Backup file '" + fields[2] + "' (" + fields[3] + " blocks)\n")
+            MemoAdd("*****************************************")
+            MemoAdd("Backup file '" + fields[2] + "' (" + fields[3] + " blocks)")
+            if DataTakt.FileCounter != 0 :
+               MemoAdd("Error: we were still working on a file, now aborted.")
+            DataTakt.FileName    = fields[2]
+            DataTakt.FileCounter = int(fields[3])
+            DataTakt.FileBuffer  = [Message]
             continue
 
          if fields[1] == "IMG" :
-            print("File IMG msg")
+            MemoAdd("*****************************************")
+            MemoAdd("Backup Image (" + fields[2] + " blocks)")
+            if DataTakt.FileCounter != 0 :
+               MemoAdd("Error: we were still working on a file, now aborted.")
+            DataTakt.FileName    = "disk-image"
+            DataTakt.FileCounter = int(fields[2])
+            DataTakt.FileBuffer  = [Message]
             continue
 
          if fields[1] == "BLK" :
-            print("File BLK msg")
+            print("File BLK msg", DataTakt.FileCounter)
+            if DataTakt.FileCounter == 0 :
+               MemoAdd("Error: unexpected BLK file, ignored.")
+            else :
+               DataTakt.FileBuffer.append(Message)
+               DataTakt.FileCounter -= 1
+               if DataTakt.FileCounter == 0 :
+                  MemoAdd("File received...")
+                  #for l in DataTakt.FileBuffer:
+                  #   print(l)
+                  SaveMsgToFile(FilePath(), DataTakt.FileName, DataTakt.FileBuffer)
+                  if CbValueUpdate.get() :
+                     # save copy of file to global buffer (for export, send etc).
+                     MessageBuffer = FileBuffer
+
             continue
 
-         MemoAdd("Invalid FILE message subtype: " + fields[1] + "\n")
+         MemoAdd("Invalid FILE message subtype: " + fields[1])
          continue
 
 #            global NrOfPoints
@@ -198,6 +303,7 @@ def DataTakt():
 
    root.after(100, DataTakt)
    # end of DataTakt
+DataTakt.FileCounter = 0
 
 
 # drive GUI
