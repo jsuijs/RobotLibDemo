@@ -5,7 +5,7 @@
 
 import rl_comms as rl      # RobotLib common code
 from   rl_gui  import *    # RobotLib common code
-
+import file_export as FileExport
 import tkinter.scrolledtext as tkst
 
 import os
@@ -74,7 +74,7 @@ def MemoAdd(data) :
    Memo.configure(state='disabled')
    Memo.see(tk.END) # Memo.see before Memo.configure sometimes flashes memo empty on linux...
 
-def Load() :
+def ClickLoad() :
    global MessageBuffer
 
    DisableUpdate()
@@ -88,7 +88,7 @@ def Load() :
       LabelCurrentFile['text'] = file_path
    #print(MessageBuffer)
 
-def Send() :
+def ClickSend() :
    global MessageBuffer
 
    DisableUpdate()
@@ -100,9 +100,9 @@ def Send() :
       mqttc.mqttc.publish("Robotlib/ComRawTx", msg.encode("cp1252"))
       time.sleep(0.15)  # Delays in seconds.
 
-def Export() :
+def ClickExport() :
    MemoAdd("button Export\n")
-
+   FileExport.Dump(MessageBuffer)
 
 #------------------------------------------------------------------------------
 root = tk.Tk()
@@ -155,9 +155,9 @@ Memo.bind("<Key>", MemoKey)
 # buttons
 CbValueUpdate  = tk.IntVar()
 BtnUpdate      = tk.Checkbutton(root, text='Update', variable=CbValueUpdate, relief='raised')
-BtnLoad        = tk.Button(root, text='Load',    command=Load)
-BtnSend        = tk.Button(root, text='Send',    command=Send)
-BtnExport      = tk.Button(root, text='Export',  command=Export)
+BtnLoad        = tk.Button(root, text='Load',    command=ClickLoad)
+BtnSend        = tk.Button(root, text='Send',    command=ClickSend)
+BtnExport      = tk.Button(root, text='Export',  command=ClickExport)
 BtnUpdate.select()
 
 BtnUpdate.grid(row=0, column=0, sticky=tk.W, pady=4)
@@ -215,13 +215,13 @@ def SaveMsgToFile(FileRoot, FileName, FileData) :
    except:
       MemoAdd("Error opening file '" + Full1 + "' for write.")
       MemoAdd(sys.exc_info()[1])
-      return
+      return FileName   # return short filename if save failed
 
    for l in FileData :
       fh.write(l + '\n')
    fh.close()
    MemoAdd("File '" + Full1 + "' saved.")
-
+   return Full1   # return full path + filename of file saved
 #------------------------------------------------------------------------------
 
 
@@ -276,11 +276,12 @@ def DataTakt():
                   MemoAdd("File received...")
                   #for l in DataTakt.FileBuffer:
                   #   print(l)
-                  SaveMsgToFile(FilePath(), DataTakt.FileName, DataTakt.FileBuffer)
+                  Name = SaveMsgToFile(FilePath(), DataTakt.FileName, DataTakt.FileBuffer)
                   if CbValueUpdate.get() :
                      # save copy of file to global buffer (for export, send etc).
-                     MessageBuffer = FileBuffer
-
+                     MessageBuffer = DataTakt.FileBuffer
+                     LabelCurrentFile['text'] = Name
+            # end of BLK processing
             continue
 
          MemoAdd("Invalid FILE message subtype: " + fields[1])
