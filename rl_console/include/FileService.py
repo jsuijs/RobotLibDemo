@@ -142,7 +142,7 @@ def MemoKey(event):
 tk.Label(root, text="Robot name: ").grid(  row=1, column=0,  columnspan=2, sticky=(tk.W))
 tk.Label(root, text="Current file: ").grid(row=2, column=0,  columnspan=2, sticky=(tk.W))
 LabelRobotName    = tk.Label(root, text=".")
-LabelCurrentFile  = tk.Label(root, text="aap noot")
+LabelCurrentFile  = tk.Label(root, text="noname")
 LabelRobotName.grid(    row=1, column=2,  columnspan=7, sticky=(tk.W))
 LabelCurrentFile.grid(  row=2, column=2,  columnspan=7, sticky=(tk.W))
 
@@ -224,7 +224,6 @@ def SaveMsgToFile(FileRoot, FileName, FileData) :
    return Full1   # return full path + filename of file saved
 #------------------------------------------------------------------------------
 
-
 def DataTakt():
    #print("DataTakt")
 
@@ -304,7 +303,11 @@ def DataTakt():
 
    root.after(100, DataTakt)
    # end of DataTakt
-DataTakt.FileCounter = 0
+
+DataTakt.FileCounter = 0   # init var
+
+# request time (and robot name) on startup
+mqttc.mqttc.publish("Robotlib/ComRawTx", "clockprint\r")
 
 
 # drive GUI
