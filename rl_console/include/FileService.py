@@ -15,8 +15,6 @@ import datetime
 import glob
 import ntpath
 
-MessageBuffer = []
-
 # def LogStart():
 #    if LogStart.Flag:
 #       # we're logging => restart (close before open)
@@ -58,26 +56,37 @@ MessageBuffer = []
 #       subprocess.call(["xdg-open", ConfigData['Terminal']['LogFile']])
 #
 
+#------------------------------------------------------------------------------
 def FilePath() :
-   return ConfigData['FileService']['FileRoot'] + "\\" + LabelRobotName['text']
+   # return path to folder with files of this robot.
+   path = ConfigData['FileService']['FileRoot'] + "\\" + LabelRobotName['text']
+   if not os.path.exists(path) :
+      MemoAdd("Error: FilePath bestaat niet (" + path + ")")
+   return path
 
+#------------------------------------------------------------------------------
 def DisableUpdate() :
    if CbValueUpdate.get() :
       MemoAdd("Disable update")
    CbValueUpdate.set(False)
 
+#------------------------------------------------------------------------------
 def MemoAdd(data) :
-   data = str(data).rstrip() + "\n"
+   data = str(data).rstrip()
    print("MemoAdd:", data)
    Memo.configure(state='normal')
-   Memo.insert(tk.END, data)
+   Memo.insert(tk.END, data + "\n")
    Memo.configure(state='disabled')
    Memo.see(tk.END) # Memo.see before Memo.configure sometimes flashes memo empty on linux...
 
+#------------------------------------------------------------------------------
 def ClickLoad() :
    global MessageBuffer
 
    DisableUpdate()
+
+   if not os.path.exists(FilePath()) :
+      return # function already reported error, so just exit.
 
    file_path = tk.filedialog.askopenfilename(initialdir=FilePath())
    if file_path != "":
@@ -88,6 +97,7 @@ def ClickLoad() :
       LabelCurrentFile['text'] = file_path
    #print(MessageBuffer)
 
+#------------------------------------------------------------------------------
 def ClickSend() :
    global MessageBuffer
 
@@ -100,38 +110,19 @@ def ClickSend() :
       mqttc.mqttc.publish("Robotlib/ComRawTx", msg.encode("cp1252"))
       time.sleep(0.15)  # Delays in seconds.
 
+#------------------------------------------------------------------------------
 def ClickExport() :
    MemoAdd("button Export\n")
    FileExport.Dump(MessageBuffer)
 
 #------------------------------------------------------------------------------
-root = tk.Tk()
-root.wm_title(os.path.basename(__file__))
+def ClickTest() :
+   global MessageBuffer
+   MemoAdd("button Test\n")
+   # C:/MyRobot/arm/_Files/reposdefault.mfsm
+   Name = SaveMsgToFile(FilePath(), "reposdefault.mfsm", MessageBuffer)
 
-# resize stuff
-root.columnconfigure(8, weight = 3 )
-root.rowconfigure(1, weight = 3 )
-
-# MQtt ------------------------------------------------------------------------
-# setup & connect MQtt client to receive messages from robot
-ConfigData = rl.LoadCfg()
-mqttc = rl.MQttClient(ConfigData['MqttIp'])
-#-----
-
-# nr of bytes input
-tk.Label(root, text="Bytes").grid(row=0, column=4)
-BytesInput = tk.Entry(root, width=3)
-BytesInput.grid(row=0, column=5)
-BytesInput.insert(0, 2)
-createToolTip(BytesInput,  "Bytes per value (1, 2 or 4, for export)")
-
-# nr of fields input
-tk.Label(root, text="Fields").grid(row=0, column=6)
-FieldsInput = tk.Entry(root, width=3)
-FieldsInput.grid(row=0, column=7)
-FieldsInput.insert(0, 2)
-createToolTip(FieldsInput,  "Values per line (for export)")
-
+#------------------------------------------------------------------------------
 def MemoKey(event):
    if (event.char != '') :
       pass
@@ -139,40 +130,7 @@ def MemoKey(event):
       # (non-printable chars like control, shift, cursor movements
       #  and ctrl-c are valid on the memo window for text selection)
 
-tk.Label(root, text="Robot name: ").grid(  row=1, column=0,  columnspan=2, sticky=(tk.W))
-tk.Label(root, text="Current file: ").grid(row=2, column=0,  columnspan=2, sticky=(tk.W))
-LabelRobotName    = tk.Label(root, text=".")
-LabelCurrentFile  = tk.Label(root, text="noname")
-LabelRobotName.grid(    row=1, column=2,  columnspan=7, sticky=(tk.W))
-LabelCurrentFile.grid(  row=2, column=2,  columnspan=7, sticky=(tk.W))
-
-# text output window
-Memo = tkst.ScrolledText(root, height=24, width=80, wrap="none")
-Memo.grid(row=3, column=0, columnspan=9, sticky=(tk.N, tk.E, tk.S, tk.W))
-Memo.configure(state='disabled')
-Memo.bind("<Key>", MemoKey)
-
-# buttons
-CbValueUpdate  = tk.IntVar()
-BtnUpdate      = tk.Checkbutton(root, text='Update', variable=CbValueUpdate, relief='raised')
-BtnLoad        = tk.Button(root, text='Load',    command=ClickLoad)
-BtnSend        = tk.Button(root, text='Send',    command=ClickSend)
-BtnExport      = tk.Button(root, text='Export',  command=ClickExport)
-BtnUpdate.select()
-
-BtnUpdate.grid(row=0, column=0, sticky=tk.W, pady=4)
-BtnLoad.grid(  row=0, column=1, sticky=tk.W, pady=4)
-BtnSend.grid(  row=0, column=2, sticky=tk.W, pady=4)
-BtnExport.grid(row=0, column=3, sticky=tk.W, pady=4)
-
-createToolTip(BtnUpdate,"Update memory with received frames")
-createToolTip(BtnLoad,  "Load file from disk into memory")
-createToolTip(BtnSend,  "Send file from memory to robot")
-createToolTip(BtnExport,"Export (convert) file from memory to disk")
-
-
 #------------------------------------------------------------------------------
-
 def SaveMsgToFile(FileRoot, FileName, FileData) :
 
    FileName = FileName.lower()
@@ -181,35 +139,44 @@ def SaveMsgToFile(FileRoot, FileName, FileData) :
    #print(Full1, FileList)
 
    if FileList != []:
-      # file exists -> backup first
-      print("Backup old file")
-      Full2 = FileRoot + "\\" + FileName + "_???.bak"    # Backup, with underscore and 3 digit number
-      FileList = glob.glob(Full2)
-      #print(Full2, FileList)
+      # file exists -> check content
+      with open(Full1, encoding="cp1252", errors='ignore') as f:
+          TmpBuffer = f.readlines()
+      TmpBuffer = [x.strip() for x in TmpBuffer]
 
-      BnList = [] # BaseName of all files (no path)
-      for fn in FileList:
-         bn = ntpath.basename(fn.lower())
-         BnList.append(bn)
-         #print("## ", fn, "-", bn)
+      if FileData == TmpBuffer :
+         print("New data equals file data. No backup (but do save to update timestamp).")
+      else :
 
-      #print(BnList)
+         # file exists and content differs -> backup
+         print("Backup old file")
+         Full2 = FileRoot + "\\" + FileName + "_???.bak"    # Backup, with underscore and 3 digit number
+         FileList = glob.glob(Full2)
+         #print(Full2, FileList)
 
-      # get first unused versioned name
-      Version =  1
-      while True:
-         NewName = "{0}_{1:0=3d}.bak".format(FileName, Version)
-         if not NewName in BnList :
-            break;
-         Version += 1
+         BnList = [] # BaseName of all files (no path)
+         for fn in FileList:
+            bn = ntpath.basename(fn.lower())
+            BnList.append(bn)
+            #print("## ", fn, "-", bn)
 
-      NewName = FileRoot + "\\" + NewName    # MicroFileSystem Backup, with underscore and 3 digit number
-      #print(Full1, NewName)
-      os.rename(Full1, NewName)
-      MemoAdd("Old file renamed to '" + NewName + "'.")
+         #print(BnList)
 
-   print("Save")
+         # get first unused versioned name
+         Version =  1
+         while True:
+            NewName = "{0}_{1:0=3d}.bak".format(FileName, Version)
+            if not NewName in BnList :
+               break;
+            Version += 1
 
+         NewName = FileRoot + "\\" + NewName    # MicroFileSystem Backup, with underscore and 3 digit number
+         #print(Full1, NewName)
+         os.rename(Full1, NewName)
+         MemoAdd("Old file renamed to '" + NewName + "'.")
+         # Backup stuff done
+
+   # save file
    try:
       fh = open(Full1,"w")
    except:
@@ -222,12 +189,10 @@ def SaveMsgToFile(FileRoot, FileName, FileData) :
    fh.close()
    MemoAdd("File '" + Full1 + "' saved.")
    return Full1   # return full path + filename of file saved
-#------------------------------------------------------------------------------
 
+#------------------------------------------------------------------------------
 def DataTakt():
    #print("DataTakt")
-
-#   global PauseFlag, ScreenUpdate
 
    # process messages
    while len(mqttc.MsgQueue) > 0 :
@@ -306,9 +271,80 @@ def DataTakt():
 
 DataTakt.FileCounter = 0   # init var
 
+
+
+#------------------------------------------------------------------------------
+#------------------------------------------------------------------------------
+# start of main code
+#------------------------------------------------------------------------------
+#------------------------------------------------------------------------------
+def main(): # dummy for Ultraedit function list
+   pass
+# main at root level.
+
+MessageBuffer = []
+
+root = tk.Tk()
+root.wm_title(os.path.basename(__file__))
+
+# resize stuff
+root.columnconfigure(8, weight = 3 )
+root.rowconfigure(1, weight = 3 )
+
+ConfigData = rl.LoadCfg()
+mqttc = rl.MQttClient(ConfigData['MqttIp']) # setup & connect MQtt client to receive messages from robot
+
+# nr of bytes input
+tk.Label(root, text="Export format").grid(row=0, column=4)
+BytesInput = tk.Entry(root, width=15)
+BytesInput.grid(row=0, column=5)
+BytesInput.insert(0, "3f")
+createToolTip(BytesInput,  "Export format per line (b, w, i, f, numer as multipier)")
+
+# test button
+BtnTest = tk.Button(root, text='Test', command=ClickTest)
+BtnTest.grid(row=0, column=8, sticky=(tk.E))
+
+## nr of fields input
+#tk.Label(root, text="Fields").grid(row=0, column=6)
+#FieldsInput = tk.Entry(root, width=3)
+#FieldsInput.grid(row=0, column=7)
+#FieldsInput.insert(0, 2)
+#createToolTip(FieldsInput,  "Values per line (for export)")
+
+tk.Label(root, text="Robot name: ").grid(  row=1, column=0,  columnspan=2, sticky=(tk.W))
+tk.Label(root, text="Current file: ").grid(row=2, column=0,  columnspan=2, sticky=(tk.W))
+LabelRobotName    = tk.Label(root, text=".")
+LabelCurrentFile  = tk.Label(root, text="noname")
+LabelRobotName.grid(    row=1, column=2,  columnspan=7, sticky=(tk.W))
+LabelCurrentFile.grid(  row=2, column=2,  columnspan=7, sticky=(tk.W))
+
+# text output window
+Memo = tkst.ScrolledText(root, height=24, width=80, wrap="none")
+Memo.grid(row=3, column=0, columnspan=9, sticky=(tk.N, tk.E, tk.S, tk.W))
+Memo.configure(state='disabled')
+Memo.bind("<Key>", MemoKey)
+
+# buttons
+CbValueUpdate  = tk.IntVar()
+BtnUpdate      = tk.Checkbutton(root, text='Update', variable=CbValueUpdate, relief='raised')
+BtnLoad        = tk.Button(root, text='Load',    command=ClickLoad)
+BtnSend        = tk.Button(root, text='Send',    command=ClickSend)
+BtnExport      = tk.Button(root, text='Export',  command=ClickExport)
+BtnUpdate.select()
+
+BtnUpdate.grid(row=0, column=0, sticky=tk.W, pady=4)
+BtnLoad.grid(  row=0, column=1, sticky=tk.W, pady=4)
+BtnSend.grid(  row=0, column=2, sticky=tk.W, pady=4)
+BtnExport.grid(row=0, column=3, sticky=tk.W, pady=4)
+
+createToolTip(BtnUpdate,"Update memory with received frames")
+createToolTip(BtnLoad,  "Load file from disk into memory")
+createToolTip(BtnSend,  "Send file from memory to robot")
+createToolTip(BtnExport,"Export (convert) file from memory to disk")
+
 # request time (and robot name) on startup
 mqttc.mqttc.publish("Robotlib/ComRawTx", "clockprint\r")
-
 
 # drive GUI
 root.after(1000, DataTakt)
