@@ -113,7 +113,7 @@ def ClickSend() :
 #------------------------------------------------------------------------------
 def ClickExport() :
    MemoAdd("button Export\n")
-   FileExport.Dump(MessageBuffer)
+   FileExport.Export(MessageBuffer, ExportFormat.get())
 
 #------------------------------------------------------------------------------
 def ClickTest() :
@@ -294,12 +294,12 @@ root.rowconfigure(1, weight = 3 )
 ConfigData = rl.LoadCfg()
 mqttc = rl.MQttClient(ConfigData['MqttIp']) # setup & connect MQtt client to receive messages from robot
 
-# nr of bytes input
+# ExportFormat field
 tk.Label(root, text="Export format").grid(row=0, column=4)
-BytesInput = tk.Entry(root, width=15)
-BytesInput.grid(row=0, column=5)
-BytesInput.insert(0, "3f")
-createToolTip(BytesInput,  "Export format per line (b, w, i, f, numer as multipier)")
+ExportFormat = tk.Entry(root, width=15)
+ExportFormat.grid(row=0, column=5)
+ExportFormat.insert(0, "3b")
+createToolTip(ExportFormat,  "Export format per line (b, w, i, f, numer as multipier)")
 
 # test button
 BtnTest = tk.Button(root, text='Test', command=ClickTest)
