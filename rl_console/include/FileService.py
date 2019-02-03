@@ -219,6 +219,16 @@ def DataTakt():
             DataTakt.FileBuffer  = [Message]
             continue
 
+         if fields[1] == "BLOB" :
+            MemoAdd("*****************************************")
+            MemoAdd("Backup blob '" + fields[2] + "' (" + fields[3] + " blocks)")
+            if DataTakt.FileCounter != 0 :
+               MemoAdd("Error: we were still working on a file, now aborted.")
+            DataTakt.FileName    = fields[2]
+            DataTakt.FileCounter = int(fields[3])
+            DataTakt.FileBuffer  = [Message]
+            continue
+
          if fields[1] == "IMG" :
             MemoAdd("*****************************************")
             MemoAdd("Backup Image (" + fields[2] + " blocks)")
@@ -320,7 +330,7 @@ LabelRobotName.grid(    row=1, column=2,  columnspan=7, sticky=(tk.W))
 LabelCurrentFile.grid(  row=2, column=2,  columnspan=7, sticky=(tk.W))
 
 # text output window
-Memo = tkst.ScrolledText(root, height=24, width=80, wrap="none")
+Memo = tkst.ScrolledText(root, height=24, width=80, wrap="none", bg="lightsteelblue3")
 Memo.grid(row=3, column=0, columnspan=9, sticky=(tk.N, tk.E, tk.S, tk.W))
 Memo.configure(state='disabled')
 Memo.bind("<Key>", MemoKey)
