@@ -63,35 +63,45 @@ def LogEnd():
       import subprocess
       subprocess.call(["xdg-open", ConfigData['Terminal']['LogFile']])
 
-def Player():
-   global PlayerLines
-   file_path = tk.filedialog.askopenfilename()
-   if file_path != "":
-      with open(file_path, encoding="cp1252", errors='ignore') as f:
-          PlayerLines += f.readlines()
-
 def Uploader():
    global UploaderLines
-   file_path = tk.filedialog.askopenfilename()
+   global BtnAbort
+
+   file_path = tk.filedialog.askopenfilename(title = "Select file to upload")
    if file_path != "":
       with open(file_path, encoding="cp1252", errors='ignore') as f:
           UploaderLines += f.readlines()
 
-def PlayerSendLines():
-   global PlayerCount
-   master.after(ConfigData['Terminal']['PlayerDelay'], PlayerSendLines)
-   if len(PlayerLines) > 0 :
-      Data = PlayerLines.pop(0).encode("cp1252", 'ignore')
-      if args.com == None :
-         # no com-port => mqtt
-         mqttc.publish("Robotlib/ComRawRx", Data)
-      else :
-         ser.write(Data)
-      PlayerCount += 1
-      BtnPlayer["text"]="Player " + str(PlayerCount)
-   else:
-      PlayerCount = 0
-      BtnPlayer["text"]="Player"
+   BtnAbort['state'] = 'normal'
+
+def Player():
+   global PlayerLines
+   global BtnAbort
+
+   file_path = tk.filedialog.askopenfilename(title = "Select file to play")
+   if file_path != "":
+      with open(file_path, encoding="cp1252", errors='ignore') as f:
+          PlayerLines += f.readlines()
+
+   BtnAbort['state'] = 'normal'
+
+def Abort():
+   global PlayerLines
+   global UploaderLines
+
+   PlayerLines = []
+   UploaderLines = []
+
+def UpdateAbortState() :
+   global PlayerLines
+   global UploaderLines
+   global BtnAbort
+
+   if len(PlayerLines)   > 0 : return
+   if len(UploaderLines) > 0 : return
+
+   BtnAbort['state'] = 'disabled'
+
 
 def UploaderSendLines():
    global UploaderCount
@@ -109,6 +119,26 @@ def UploaderSendLines():
    else:
       UploaderCount = 0
       BtnUpload["text"]="Upload"
+
+   UpdateAbortState()
+
+def PlayerSendLines():
+   global PlayerCount
+   master.after(ConfigData['Terminal']['PlayerDelay'], PlayerSendLines)
+   if len(PlayerLines) > 0 :
+      Data = PlayerLines.pop(0).encode("cp1252", 'ignore')
+      if args.com == None :
+         # no com-port => mqtt
+         mqttc.publish("Robotlib/ComRawRx", Data)
+      else :
+         ser.write(Data)
+      PlayerCount += 1
+      BtnPlayer["text"]="Player " + str(PlayerCount)
+   else:
+      PlayerCount = 0
+      BtnPlayer["text"]="Player"
+
+   UpdateAbortState()
 
 def LineInputEnterKey(event):
    Data = (LineInput.get() + "\r").encode("cp1252", 'ignore')
@@ -190,7 +220,6 @@ def MemoKey(event):
 # text output window
 Memo = tkst.ScrolledText(master, height=24, width=80, wrap="none")
 Memo.grid(row=1, column=0, columnspan=9, sticky=(tk.N, tk.E, tk.S, tk.W))
-Memo.configure(state='disabled')
 Memo.bind("<Key>", MemoKey)
 
 # buttons
@@ -200,21 +229,27 @@ BtnLogStart = tk.Button(master, text='LogStart', command=LogStart)   # LogStart 
 BtnLogEnd   = tk.Button(master, text='SaveAll',  command=LogEnd)     # LogEnd doubles as SaveAll
 BtnUpload   = tk.Button(master, text='Upload',   command=Uploader)
 BtnPlayer   = tk.Button(master, text='Player',   command=Player)
+BtnAbort    = tk.Button(master, text='Abort',    command=Abort)
 BtnFrames   = tk.Checkbutton(master, text='Frames', variable=CbValueFrames, relief='raised')
 BtnFrames.select()
+
+Memo['state']='disabled'
+BtnAbort['state'] = 'disabled'
 
 BtnQuit.grid(       row=0, column=0, sticky=tk.W, pady=4)
 BtnLogStart.grid(   row=0, column=1, sticky=tk.W, pady=4)
 BtnLogEnd.grid(     row=0, column=2, sticky=tk.W, pady=4)
 BtnUpload.grid(     row=0, column=3, sticky=tk.W, pady=4)
 BtnPlayer.grid(     row=0, column=4, sticky=tk.W, pady=4)
-BtnFrames.grid(     row=0, column=5, sticky=tk.W, pady=4)
+BtnAbort.grid(      row=0, column=5, sticky=tk.W, pady=4)
+BtnFrames.grid(     row=0, column=6, sticky=tk.W, pady=4)
 
 createToolTip(BtnQuit,     "Quit program")
 createToolTip(BtnLogStart, "(Re)start logging")
 createToolTip(BtnLogEnd,   "Close logfile & open in editor")
 createToolTip(BtnUpload,   "Upload file to serial)")
 createToolTip(BtnPlayer,   "Replay (log)file (publish like received from serial)")
+createToolTip(BtnAbort,    "Abort Upload and Replay")
 
 # MQTT stuff
 def on_message(client, userdata, message):
