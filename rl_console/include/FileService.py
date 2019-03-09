@@ -302,6 +302,10 @@ root.columnconfigure(8, weight = 3 )
 root.rowconfigure(1, weight = 3 )
 
 ConfigData = rl.LoadCfg()
+
+# print path - implies check of config data
+print("File root: ", ConfigData['FileService']['FileRoot'])
+
 mqttc = rl.MQttClient(ConfigData['MqttIp']) # setup & connect MQtt client to receive messages from robot
 
 # ExportFormat field
