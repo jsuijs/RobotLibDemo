@@ -116,6 +116,13 @@ def DataTakt():
       ScreenUpdate = 0
       ax.relim()
       ax.autoscale()
+      # override Autoscale when Range is a valid float, larger than 0
+      try:
+         R = float(Range.get())
+         if R > 0 :
+            ax.set_ylim(0, R)
+      except :
+         pass
       canvas.draw()
       print("Update screen")
 
@@ -128,6 +135,18 @@ tk.Button(master=BBar, text='Quit',  command=quit        ).pack(side=tk.LEFT)
 tk.Button(master=BBar, text='Clear', command=ClickClear  ).pack(side=tk.LEFT)
 tk.Button(master=BBar, text='Pause', command=ClickPause  ).pack(side=tk.LEFT)
 tk.Button(master=BBar, text='Export', command=ClickExport).pack(side=tk.LEFT)
+
+def RangeCallback(*args):
+   global ScreenUpdate
+   ScreenUpdate = 1
+
+# Range uses tkinter var to enable callback on change
+tk.Label(master=BBar, text="Range").pack(side=tk.LEFT)
+RangeVar = tk.StringVar()
+RangeVar.trace('w', RangeCallback)
+Range = tk.Entry(master=BBar, width=8, textvariable=RangeVar)
+Range.pack(side=tk.LEFT)
+createToolTip(Range,  "Max Y value")
 
 canvas = AddFigToCanvas(fig)
 
