@@ -55,25 +55,43 @@ def ClickPause():
    global PauseFlag
    PauseFlag *= -1
 
-def ClickExport():
+def ClickFile():
    if len(ax.lines) > 0 :
       FileName = tk.filedialog.asksaveasfilename(defaultextension=".txt")
       if FileName:
          print("Export to " + FileName)
          MyData = ax.lines # get list of 2d datapoint lists (with one point each)
-
+         Lines = ""
          # collect rows & write them to file
          f = open(FileName, 'w')
          for point in MyData :
             x = point.get_xdata(orig=True)[0]   # get the only element from the list
             y = point.get_ydata(orig=True)[0]
-            f.write(str(x) + '\t' + str(y) + '\n')
+            Line = str(x) + '\t' + str(y) + '\n'
+            Lines += Line
+            f.write(Line)
          f.close()
          print("Export done")
       else:
          print("Export canceled")
    else:
       print("No data to export")
+
+def ClickClipBoard():
+   if len(ax.lines) > 0 :
+      MyData = ax.lines # get list of 2d datapoint lists (with one point each)
+      Lines = ""
+      # collect rows
+      for point in MyData :
+         x = point.get_xdata(orig=True)[0]   # get the only element from the list
+         y = point.get_ydata(orig=True)[0]
+         Line = str(x) + '\t' + str(y) + '\n'
+         Lines += Line
+      root.clipboard_clear()
+      root.clipboard_append(Lines)
+      print("Export to ClipBoard done")
+   else:
+      print("No data for ClipBoard")
 
 #------------------------------------------------------------------------------
 # create parser
@@ -131,10 +149,11 @@ def DataTakt():
 BBar = tk.Frame(height=2, bd=1, relief=tk.SUNKEN)
 BBar.pack(fill=tk.X, padx=5, pady=5)
 
-tk.Button(master=BBar, text='Quit',  command=quit        ).pack(side=tk.LEFT)
-tk.Button(master=BBar, text='Clear', command=ClickClear  ).pack(side=tk.LEFT)
-tk.Button(master=BBar, text='Pause', command=ClickPause  ).pack(side=tk.LEFT)
-tk.Button(master=BBar, text='Export', command=ClickExport).pack(side=tk.LEFT)
+tk.Button(master=BBar, text='Quit',       command=quit            ).pack(side=tk.LEFT)
+tk.Button(master=BBar, text='Clear',      command=ClickClear      ).pack(side=tk.LEFT)
+tk.Button(master=BBar, text='Pause',      command=ClickPause      ).pack(side=tk.LEFT)
+tk.Button(master=BBar, text='File',       command=ClickFile       ).pack(side=tk.LEFT)
+tk.Button(master=BBar, text='ClipBoard',  command=ClickClipBoard  ).pack(side=tk.LEFT)
 
 def RangeCallback(*args):
    global ScreenUpdate

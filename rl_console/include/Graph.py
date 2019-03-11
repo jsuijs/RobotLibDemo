@@ -57,7 +57,7 @@ def ClickPause():
    global PauseFlag
    PauseFlag *= -1
 
-def ClickExport():
+def ClickFile():
 
    # get list of columns
    MyData = []
@@ -84,6 +84,30 @@ def ClickExport():
          print("Export canceled")
    else:
       print("No data to export")
+
+def ClickClipBoard():
+
+   # get list of columns
+   MyData = []
+   for MyLine in lines :
+      if len(MyLine.get_ydata()) > 0 :
+         MyData.append(MyLine.get_ydata().tolist())
+
+   if len(MyData) > 0:
+      # there is data to export...
+      # collect rows
+      Lines = ""
+      while len(MyData[0]) > 0:
+         Row = [];
+         for Col in MyData :
+            Row.append(Col.pop(0))
+         Line = '\t'.join(map(str,Row)) + '\n'
+         Lines += Line
+      root.clipboard_clear()
+      root.clipboard_append(Lines)
+      print("Export to ClipBoard done")
+   else:
+      print("No data for ClipBoard")
 
 #------------------------------------------------------------------------------
 # create parser
@@ -140,10 +164,11 @@ def DataTakt():
 BBar = tk.Frame(height=2, bd=1, relief=tk.SUNKEN)
 BBar.pack(fill=tk.X, padx=5, pady=5)
 
-tk.Button(master=BBar, text='Quit',   command=quit          ).pack(side=tk.LEFT)
-tk.Button(master=BBar, text='Clear',  command=ClickClear    ).pack(side=tk.LEFT)
-tk.Button(master=BBar, text='Pause',  command=ClickPause    ).pack(side=tk.LEFT)
-tk.Button(master=BBar, text='Export', command=ClickExport   ).pack(side=tk.LEFT)
+tk.Button(master=BBar, text='Quit',       command=quit            ).pack(side=tk.LEFT)
+tk.Button(master=BBar, text='Clear',      command=ClickClear      ).pack(side=tk.LEFT)
+tk.Button(master=BBar, text='Pause',      command=ClickPause      ).pack(side=tk.LEFT)
+tk.Button(master=BBar, text='File',       command=ClickFile       ).pack(side=tk.LEFT)
+tk.Button(master=BBar, text='ClipBoard',  command=ClickClipBoard  ).pack(side=tk.LEFT)
 
 canvas = AddFigToCanvas(fig)
 
