@@ -52,10 +52,14 @@ def ClickClear():
    ScreenUpdate = 1
    NrOfPoints   = 0
 
-PauseFlag = -1
+PauseFlag = 1
 def ClickPause():
    global PauseFlag
    PauseFlag *= -1
+   if PauseFlag == 1 :
+      root.wm_title(os.path.basename(__file__) + " - Data of " + args.msg + " (Paused)")
+   else :
+      root.wm_title(os.path.basename(__file__) + " - Data of " + args.msg)
 
 def ClickFile():
 
@@ -116,7 +120,8 @@ import argparse
 parser = argparse.ArgumentParser()
 parser.add_argument('msg', help='Message name to process')
 args = parser.parse_args()
-root.wm_title(os.path.basename(__file__) + " - Data of " + args.msg)
+
+ClickPause()   # sets windows title
 
 # MQtt ------------------------------------------------------------------------
 # setup & connect MQtt client to receive messages from robot
@@ -164,7 +169,6 @@ def DataTakt():
 BBar = tk.Frame(height=2, bd=1, relief=tk.SUNKEN)
 BBar.pack(fill=tk.X, padx=5, pady=5)
 
-tk.Button(master=BBar, text='Quit',       command=quit            ).pack(side=tk.LEFT)
 tk.Button(master=BBar, text='Clear',      command=ClickClear      ).pack(side=tk.LEFT)
 tk.Button(master=BBar, text='Pause',      command=ClickPause      ).pack(side=tk.LEFT)
 tk.Button(master=BBar, text='File',       command=ClickFile       ).pack(side=tk.LEFT)
