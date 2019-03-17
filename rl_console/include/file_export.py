@@ -3,6 +3,7 @@
 
 
 def HexDump(Data) :
+   OutData = ""
    n = 0
    while len(Data) :
       #process in 16 byte chunks
@@ -12,8 +13,9 @@ def HexDump(Data) :
       s1 = " ".join([f"{i:02x}" for i in b])
       s1 = s1[0:23] + " " + s1[23:]
       s2 = "".join([chr(i) if 32 <= i <= 127 else "." for i in b])
-      print(f"{n * 16:04x}  {s1:<{48}}  |{s2}|")
+      OutData += ((f"{n * 16:04x}  {s1:<{48}}  |{s2}|") + "\n")
       n += 1
+   return OutData
 
 def Export(MessageBuffer, FormatString) :
 
@@ -30,6 +32,12 @@ def Export(MessageBuffer, FormatString) :
             print("FCB: ", decoded)
          else :
             RawData = RawData + decoded
+
+   if (len(RawData) == 0) :
+      print("No data to export, abort.")
+      return
+
+   print("Bytes to export:", len(RawData))
 
    # expand format string
    print(FormatString)
@@ -58,10 +66,11 @@ def Export(MessageBuffer, FormatString) :
       Multiplier = 0
    print(NewFormat)
 
+   OutBuffer = ""
+
    # start processing of data.
    if NewFormat == 'h' :
-      HexDump(RawData)
-      return
+      return HexDump(RawData)
 
    # convert binary data to requested format
    while len(RawData) :
@@ -71,13 +80,18 @@ def Export(MessageBuffer, FormatString) :
          TmpFormat = TmpFormat[1:]
 
          if c == 'b' :     # byte values
-            Value = ord(RawData[:1])
+            Value = RawData[0]
             RawData = RawData[1:]
-            print("_", Value, end='')
+            OutBuffer += str(Value) + '\t'
+            continue
+         if c == 'w' :     # word values
+            Value = RawData[0] + 256 * RawData[1]
+            RawData = RawData[2:]
+            OutBuffer += str(Value) + '\t'
             continue
 
          print("Error: unknown format char (", c, ")")
          return
-      print()
+      OutBuffer = OutBuffer[:-1] + "\n" # change last tab to line end, each time the format string has been processed
 
-   print("format string export end")
+   return OutBuffer

@@ -15,47 +15,6 @@ import datetime
 import glob
 import ntpath
 
-# def LogStart():
-#    if LogStart.Flag:
-#       # we're logging => restart (close before open)
-#       LogStart.File.close()
-#
-#    # actual start of logging.
-#    LogStart.File = open(ConfigData['Terminal']['LogFile'],"wb")
-#
-#    # change (retain) logging state
-#    LogStart.Flag = True
-#    BtnLogStart["text"]  = "LogRestart"
-#    BtnLogEnd["text"]    = "LogEnd"
-# LogStart.Flag = False # on startup, we're not logging.
-#
-# def LogEnd():
-#    if LogStart.Flag:
-#       # we're logging => logend
-#       # save
-#       LogStart.File.close()
-#
-#       # Change to non-logging state
-#       LogStart.Flag = False
-#       BtnLogStart["text"]  = "LogStart"
-#       BtnLogEnd["text"]    = "SaveAll"
-#
-#    else :
-#       # not logging => SaveAll
-#       File = open(ConfigData['Terminal']['LogFile'], "w", encoding="cp1252", errors='ignore')
-#       t = Memo.get('1.0', tk.END) # line 1, position 0 => beginning of text
-#       File.write(t)
-#       File.close()
-#
-#    # launch file
-#    import platform
-#    if platform.system() == 'Windows' :
-#       os.startfile(ConfigData['Terminal']['LogFile'])
-#    else :
-#       import subprocess
-#       subprocess.call(["xdg-open", ConfigData['Terminal']['LogFile']])
-#
-
 #------------------------------------------------------------------------------
 def FilePath() :
    # return path to folder with files of this robot.
@@ -113,7 +72,11 @@ def ClickSend() :
 #------------------------------------------------------------------------------
 def ClickExport() :
    MemoAdd("button Export\n")
-   FileExport.Export(MessageBuffer, ExportFormat.get())
+   OutBuffer = FileExport.Export(MessageBuffer, ExportFormat.get())
+
+   root.clipboard_clear()
+   root.clipboard_append(OutBuffer)
+   print("Export to ClipBoard done")
 
 #------------------------------------------------------------------------------
 def ClickTest() :
@@ -299,7 +262,7 @@ root.wm_title(os.path.basename(__file__))
 
 # resize stuff
 root.columnconfigure(8, weight = 3 )
-root.rowconfigure(1, weight = 3 )
+root.rowconfigure(3, weight = 3 )
 
 ConfigData = rl.LoadCfg()
 
