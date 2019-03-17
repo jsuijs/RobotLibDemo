@@ -1,7 +1,6 @@
 #!/usr/bin/python3
 # -*- coding: cp1252 -*-
 
-
 def HexDump(Data) :
    OutData = ""
    n = 0
@@ -12,12 +11,14 @@ def HexDump(Data) :
 
       s1 = " ".join([f"{i:02x}" for i in b])
       s1 = s1[0:23] + " " + s1[23:]
-      s2 = "".join([chr(i) if 32 <= i <= 127 else "." for i in b])
+      s2 = "".join([chr(i) if 32 <= i <= 126 else "." for i in b])
       OutData += ((f"{n * 16:04x}  {s1:<{48}}  |{s2}|") + "\n")
       n += 1
    return OutData
 
 def Export(MessageBuffer, FormatString) :
+
+   print(MessageBuffer)
 
    # convert message format to binary
    RawData = bytearray()

@@ -22,6 +22,7 @@ ScreenUpdate = 0
 # js: 111 betekent 1 x 1 grid, 1e plot (meerdere plots zijn mogelijk).
 # shorthand voor 3 params: subplot(nrows, ncols, plot_number)
 #ax = plt.subplot(111)
+plt.xkcd()
 fig = plt.figure(1)           # fig is placed on canvas later
 ax = fig.add_subplot(111)     # subplot is added to fig
 plt.subplots_adjust(left=0.1, bottom=0.1, right=0.95, top=0.95)
