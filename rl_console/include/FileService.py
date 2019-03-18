@@ -224,21 +224,6 @@ def DataTakt():
          MemoAdd("Invalid FILE message subtype: " + fields[1])
          continue
 
-#            global NrOfPoints
-#            #print("d ", NrOfPoints, len(lines[0].get_xdata()), len(lines[0].get_ydata()))
-#            MyLines = list(lines) # copy list
-#            for field in fields[1:] :
-#               # assign each value to its corresponding line. Should work with
-#               # any number of lines. So plot command at the top determins the max
-#               # number of graphs shown.
-#               try :
-#                  MyLine = MyLines.pop(0)
-#                  FieldValue = float(field)
-#                  MyLine.set_xdata(np.append(MyLine.get_xdata(), NrOfPoints))
-#                  MyLine.set_ydata(np.append(MyLine.get_ydata(), FieldValue))
-#               except:
-#                  pass
-
    root.after(100, DataTakt)
    # end of DataTakt
 
@@ -281,13 +266,6 @@ createToolTip(ExportFormat,  "Export format per line (b, w, i, f, numer as multi
 # test button
 BtnTest = tk.Button(root, text='Test', command=ClickTest)
 BtnTest.grid(row=0, column=8, sticky=(tk.E))
-
-## nr of fields input
-#tk.Label(root, text="Fields").grid(row=0, column=6)
-#FieldsInput = tk.Entry(root, width=3)
-#FieldsInput.grid(row=0, column=7)
-#FieldsInput.insert(0, 2)
-#createToolTip(FieldsInput,  "Values per line (for export)")
 
 tk.Label(root, text="Robot name: ").grid(  row=1, column=0,  columnspan=2, sticky=(tk.W))
 tk.Label(root, text="Current file: ").grid(row=2, column=0,  columnspan=2, sticky=(tk.W))
