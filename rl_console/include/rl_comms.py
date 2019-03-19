@@ -94,7 +94,7 @@ class MQttClient():
 # MQtt ------------------------------------------------------------------------
 
 
-# FrameDecoder ---------------------------------------------------------------------
+# FrameDecoder ----------------------------------------------------------------
 # loosely based on SLIP decoder by Roman Haefeli
 # https://github.com/reduzent/pyslip
 class FrameDecoder():
@@ -154,3 +154,19 @@ class FrameDecoder():
          self.packet += char
 
       return (packetlist)
+
+# 'our' CRC16 -----------------------------------------------------------------
+def crc16(data: bytes):
+   data = bytearray(data)
+   crc = 0
+   for b in data:
+      cur_byte = 0xFF & b
+      crc ^= cur_byte
+      for _ in range(0, 8):
+         if (crc & 0x0001) :
+            crc = (crc >> 1) ^ 0xA001
+         else:
+            crc >>= 1
+         cur_byte >>= 1
+
+   return crc & 0xFFFF

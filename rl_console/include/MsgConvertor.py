@@ -5,6 +5,7 @@
 
 import rl_comms as rl      # RobotLib common code
 from   rl_gui  import *    # RobotLib common code
+from   blob_msg import *
 import file_export as FileExport
 import tkinter.scrolledtext as tkst
 
@@ -72,6 +73,20 @@ def DataTakt():
 
 DataTakt.FileCounter = 0   # init var
 
+def HexDump(Data) :
+   OutData = ""
+   n = 0
+   while len(Data) :
+      #process in 16 byte chunks
+      b = Data[:16]
+      Data = Data[16:]
+
+      s1 = " ".join([f"{i:02x}" for i in b])
+      s1 = s1[0:23] + " " + s1[23:]
+      s2 = "".join([chr(i) if 32 <= i <= 126 else "." for i in b])
+      OutData += ((f"{n * 16:04x}  {s1:<{48}}  |{s2}|") + "\n")
+      n += 1
+   return OutData
 
 
 #------------------------------------------------------------------------------
@@ -82,8 +97,6 @@ DataTakt.FileCounter = 0   # init var
 def main(): # dummy for Ultraedit function list
    pass
 # main at root level.
-
-MessageBuffer = []
 
 root = tk.Tk()
 root.wm_title(os.path.basename(__file__))
@@ -162,6 +175,22 @@ m.add(BottomMemo)
 # bottom line
 LabelStatus  = tk.Label(root, text="Startup ready.")
 LabelStatus.grid(row=4, column=0,  columnspan=8, sticky=(tk.W))
+
+M = BlobMsg(TestMsg)
+#raw = MsgGetRawData(TestMsg)
+print(HexDump(M.RawData))
+if M.MsgOk :
+   MetaDataFormat.delete(0,tk.END)
+   MetaDataFormat.insert(0, M.MetaFormat)
+   LineDataFormat.delete(0,tk.END)
+   LineDataFormat.insert(0, M.LineFormat)
+
+   TopMemo.configure(state='normal')
+   TopMemo.delete(1.0, tk.END)
+   TopMemo.insert(tk.END, M.MsgString)
+   TopMemo.configure(state='disabled')
+   TopMemo.see(tk.END) # Memo.see before Memo.configure sometimes flashes memo empty on linux...
+   StatusMsg("Message load succes")
 
 #------------------------------------------------------------------------------
 # drive GUI
