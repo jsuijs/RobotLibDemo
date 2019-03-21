@@ -57,3 +57,63 @@ class BlobMsg:
          self.MsgOk = True
       else :
          self.MsgOk = False
+
+#------------------------------------------------------------------------------
+#------------------------------------------------------------------------------
+# related functions (not methods)
+#------------------------------------------------------------------------------
+#------------------------------------------------------------------------------
+
+#------------------------------------------------------------------------------
+# expand multiplier in format string to chars
+def ExpandFormatString(FormatString) :
+
+   Multiplier = 0
+   NewFormat = ""
+   while len(FormatString) :
+      c = FormatString[:1].lower()
+      FormatString = FormatString[1:]
+
+      if c.isdigit() :
+         Multiplier = Multiplier * 10 + int(c)
+         continue
+
+      if c == ' ': continue   # spaces are allowed in gui, not in message
+      if c == 'h':
+         NewFormat = 'h'      # Hex mode overrides other formats.
+         break
+      if c == '-':
+         NewFormat = '-'      # NONE (minus) overrides other formats (used for no meta data).
+         break
+
+      # place char one or more times in output
+      if Multiplier == 0 : Multiplier = 1
+
+      for _ in range(Multiplier):
+#         print("aa ", c, "-", Multiplier)
+         NewFormat += c
+      Multiplier = 0
+
+   return NewFormat
+
+#------------------------------------------------------------------------------
+# Count # of bytes used by format string.
+def CountFormatString(FormatString) :
+
+   Length = 0
+   for c in ExpandFormatString(FormatString) :
+
+      # normal types
+      if c == 'b' : Length += 1 # byte
+      if c == 'w' : Length += 2 # word
+      if c == 'i' : Length += 4 # int
+      if c == 'f' : Length += 4 # float
+
+      # special types
+      if c == '-' :
+         return 0 # no data (used for meta data)
+
+      if c == 'h' :
+         return -1 # hex dump (greedy)
+
+   return Length
