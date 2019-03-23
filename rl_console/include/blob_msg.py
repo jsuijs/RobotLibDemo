@@ -98,16 +98,31 @@ def ExpandFormatString(FormatString) :
 
 #------------------------------------------------------------------------------
 # Count # of bytes used by format string.
+# special return values:
+#  0 : no bytes required (-)
+# -1 : greedy ('h')
+# -2 : invalid format
 def CountFormatString(FormatString) :
 
    Length = 0
    for c in ExpandFormatString(FormatString) :
 
       # normal types
-      if c == 'b' : Length += 1 # byte
-      if c == 'w' : Length += 2 # word
-      if c == 'i' : Length += 4 # int
-      if c == 'f' : Length += 4 # float
+      if c == 'b' :
+         Length += 1 # byte
+         continue
+
+      if c == 'w' :
+         Length += 2 # word
+         continue
+
+      if c == 'i' :
+         Length += 4 # int
+         continue
+
+      if c == 'f' :
+         Length += 4 # float
+         continue
 
       # special types
       if c == '-' :
@@ -116,4 +131,5 @@ def CountFormatString(FormatString) :
       if c == 'h' :
          return -1 # hex dump (greedy)
 
+      return -2 # invalid char
    return Length
