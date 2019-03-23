@@ -17,16 +17,22 @@ class BlobMsg:
 
       self.MsgString = InMsgString.replace('Á', '').replace('À', '')
       self.MsgFlags = 0
+      self.MsgOk = False
+
+      NewMessage = ""
 
       # convert message into fiels and raw (binary) data
       self.RawData = bytearray()
       for line in self.MsgString.splitlines() :
          Fields = line.split()
          #print(fields)
+         if len(Fields) < 2 :
+            continue # ignore any pre/post message garbage
 
          if Fields[0] != "BLOB" :
-            print("Error: invalid msg format")
-            return
+            continue # ignore any pre/post message garbage
+
+         NewMessage += (line + '\n')
 
          if Fields[1] == "START" :
             self.Source       = Fields[2]
@@ -48,15 +54,18 @@ class BlobMsg:
             self.ValidMsg = True
             self.MsgFlags += 4   # add exactly once
 
-      if self.Crc == rl.crc16(self.RawData) :
-         self.MsgFlags += 8   # add exactly once
-      else :
-         print("Crc Error")
+      # after processing all messages
+      if self.MsgFlags != 7 :
+         self.Error = "Invalid format (" + str(self.MsgFlags) +")"
+         return
 
-      if self.MsgFlags == 15 :
-         self.MsgOk = True
-      else :
-         self.MsgOk = False
+      if self.Crc != rl.crc16(self.RawData) :
+         self.Error = "Crc Error"
+         return
+
+      # all went well
+      self.MsgString = NewMessage
+      self.MsgOk = True
 
 #------------------------------------------------------------------------------
 #------------------------------------------------------------------------------

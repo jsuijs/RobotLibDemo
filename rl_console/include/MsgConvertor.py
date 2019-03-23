@@ -19,21 +19,31 @@ def StatusMsg(data) :
 
 #------------------------------------------------------------------------------
 def ClickPaste() :
-   StatusMsg("ClickPaste")
+   ClickPasteWorker(root.clipboard_get())
 
-   Data = root.clipboard_get().replace('Á', '').replace('À', '')
-   # todo: checks - is dit een valide frame?
+def ClickPasteWorker(Data) :
+   global Msg
 
-   TopMemo.configure(state='normal')
-   TopMemo.delete(1.0, tk.END)
-   TopMemo.insert(tk.END, Data)
-   TopMemo.configure(state='disabled')
-   TopMemo.see(tk.END) # Memo.see before Memo.configure sometimes flashes memo empty on linux...
+   Msg = BlobMsg(Data)
+
+   print(HexDump(Msg.RawData))
+   if Msg.MsgOk :
+      MetaDataFormat.delete(0,tk.END)
+      MetaDataFormat.insert(0, Msg.MetaFormat)
+
+      LineDataFormat.delete(0,tk.END)
+      LineDataFormat.insert(0, Msg.LineFormat)
+
+      MemoLoad(TopMemo, Msg.MsgString)
+
+      StatusMsg("Message load succes")
+   else :
+      StatusMsg("Error loading message: " + Msg.Error)
+
 
 #------------------------------------------------------------------------------
 def ClickCopyTop() :
-   StatusMsg("ClickCopyTop")
-   # todo: add framing to msg
+
    Data = ""
    Lines = TopMemo.get(1.0, tk.END).splitlines()
    for L in Lines:
@@ -42,21 +52,26 @@ def ClickCopyTop() :
    root.clipboard_clear()
    root.clipboard_append(Data)
 
+   StatusMsg("Copy (framed) message to clipboard")
+
 #------------------------------------------------------------------------------
 def ClickCopyBottom() :
-   StatusMsg("ClickCopyBottom")
    root.clipboard_clear()
    root.clipboard_append(BottomMemo.get(1.0, tk.END))
+   StatusMsg("Output data copied to clipboard")
 
 #------------------------------------------------------------------------------
 def ClickCData() :
+
+   StatusMsg("LineData converted.")   # message at top so it can be replaced by errors
+
    MetaLen = CountFormatString(MetaDataFormat.get())
    if MetaLen < 0 :
-      StatusMsg("Error: invalid MetaDataFormat")
+      StatusMsg("Error: invalid MetaDataFormat.")
       return
 
    if LineDataFormat.get() == 'h' :
-      MemoLoad(BottomMemo, HexDump(M.RawData[MetaLen:]))
+      MemoLoad(BottomMemo, HexDump(Msg.RawData[MetaLen:]))
       StatusMsg("Conversion to hex done.")
       return
 
@@ -64,18 +79,28 @@ def ClickCData() :
    Format = LineDataFormat.get()
    LineLen = CountFormatString(Format)
    if LineLen == -2 :
-      StatusMsg("Error: invalid LineDataFormat")
+      StatusMsg("Error: invalid LineDataFormat.")
       return
 
    if LineLen == 0 :
-      StatusMsg("Error: LineDataFormat must be non-zero")
+      StatusMsg("Error: LineDataFormat must be non-zero.")
       return
-
-   MemoLoad(BottomMemo, ConvertToFormat(M.RawData[MetaLen:], Format))
+   r = ConvertToFormat(Msg.RawData[MetaLen:], Format)
+#   print(r)
+   MemoLoad(BottomMemo, r)
 
 #------------------------------------------------------------------------------
 def ClickCMeta() :
-   StatusMsg("ClickCMeta")
+   StatusMsg("MetaData converted.") # message at the top, so it can be replaced by errors
+
+   Format = MetaDataFormat.get()
+   MetaLen = CountFormatString(Format)
+   if MetaLen < 0 :
+      StatusMsg("Error: invalid MetaDataFormat.")
+      return
+
+   r = ConvertToFormat(Msg.RawData[:MetaLen], Format)
+   MemoLoad(BottomMemo, r)
 
 #------------------------------------------------------------------------------
 def MemoKey(event):
@@ -114,24 +139,42 @@ def ConvertToFormat(RawData, Format) :
 
    Format = ExpandFormatString(Format)
    OutBuffer = ''
-   while len(RawData) :
-      for c in Format :
-         c = c.lower()
+   try :
+      while len(RawData) :
+         for c in Format :
+            c = c.lower()
 
-         if c == 'b' :     # byte values
-            Value = RawData[0]
-            RawData = RawData[1:]
-            OutBuffer += str(Value) + '\t'
-            continue
-         if c == 'w' :     # word values
-            Value = RawData[0] + 256 * RawData[1]
-            RawData = RawData[2:]
-            OutBuffer += str(Value) + '\t'
-            continue
+            if c == 'b' :     # byte values
+               Value = RawData[0]
+               RawData = RawData[1:]
+               OutBuffer += str(Value) + '\t'
+               continue
+            if c == 'w' :     # word values
+               Value = RawData[0] + 256 * RawData[1]
+               RawData = RawData[2:]
+               OutBuffer += str(Value) + '\t'
+               continue
+            if c == 'i' :     # int values
+               Value = RawData[0] + 256 * (RawData[1] + 256 * (RawData[2] + 256 * RawData[3]))
+               RawData = RawData[4:]
+               OutBuffer += str(Value) + '\t'
+               continue
+            if c == 'f' :     # float values
+               IntValue = RawData[0] + 256 * (RawData[1] + 256 * (RawData[2] + 256 * RawData[3]))
+               RawData = RawData[4:]
 
-         print("Error: unknown format char (", c, ")")
-         return
-      OutBuffer = OutBuffer[:-1] + "\n" # change last tab to line end, each time the format string has been processed
+               import anyfloat as anfl
+               af = anfl.anyfloat.from_ieee(IntValue, (8, 23))
+               OutBuffer += str(float(af)) + '\t'
+               continue
+
+            print("Error: unknown format char (", c, ")")
+            return
+
+         OutBuffer = OutBuffer[:-1] + "\n" # change last tab to line end, each time the format string has been processed
+
+   except:
+      StatusMsg("Warning: conversion errors or no multiple full lines of data.")
 
    return OutBuffer
 
@@ -210,8 +253,8 @@ createToolTip(B,"Copy converted data from bottom windows to clipboard.")
 
 #------------------------------------------------------------------------------
 # Paned (resizable) window with 2 memo fields
-m = tk.PanedWindow(orient=tk.VERTICAL)
-m.grid(row=3, column=0, columnspan=8, sticky=(tk.N, tk.E, tk.S, tk.W))
+Paned = tk.PanedWindow(orient=tk.VERTICAL)
+Paned.grid(row=3, column=0, columnspan=8, sticky=(tk.N, tk.E, tk.S, tk.W))
 
 TopMemo = tkst.ScrolledText(root, height=10, width=80, wrap="none", bg="palegreen3")
 TopMemo.configure(state='disabled')
@@ -221,27 +264,16 @@ BottomMemo = tkst.ScrolledText(root, height=10, width=80, wrap="none", bg="paleg
 BottomMemo.configure(state='disabled')
 BottomMemo.bind("<Key>", MemoKey)
 
-m.add(TopMemo)
-m.add(BottomMemo)
+Paned.add(TopMemo)
+Paned.add(BottomMemo)
 
 #------------------------------------------------------------------------------
 # bottom line
 LabelStatus  = tk.Label(root, text="Startup ready.")
 LabelStatus.grid(row=4, column=0,  columnspan=8, sticky=(tk.W))
 
-M = BlobMsg(TestMsg)
-#raw = MsgGetRawData(TestMsg)
-print(HexDump(M.RawData))
-if M.MsgOk :
-   MetaDataFormat.delete(0,tk.END)
-   MetaDataFormat.insert(0, M.MetaFormat)
+ClickPasteWorker(TestMsg)
 
-   LineDataFormat.delete(0,tk.END)
-   LineDataFormat.insert(0, M.LineFormat)
-
-   MemoLoad(TopMemo, M.MsgString)
-
-   StatusMsg("Message load succes")
 
 #------------------------------------------------------------------------------
 # drive GUI
