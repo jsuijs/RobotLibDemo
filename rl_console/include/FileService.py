@@ -135,8 +135,11 @@ def SaveMsgToFile(FileRoot, FileName, FileData) :
 
          NewName = FileRoot + "\\" + NewName    # MicroFileSystem Backup, with underscore and 3 digit number
          #print(Full1, NewName)
-         os.rename(Full1, NewName)
-         MemoAdd("Old file renamed to '" + NewName + "'.")
+         try :
+            os.rename(Full1, NewName)
+            MemoAdd("Old file renamed to '" + NewName + "'.")
+         except :
+            print("error creating backup (rename error, more than 999 files??)")
          # Backup stuff done
 
    # save file

@@ -184,7 +184,7 @@ def MemoLoad(_Memo, Data) :
    _Memo.delete(1.0, tk.END)
    _Memo.insert(tk.END, Data)
    _Memo.configure(state='disabled')
-   _Memo.see(tk.END) # Memo.see before Memo.configure sometimes flashes memo empty on linux...
+   #_Memo.see(tk.END) # Memo.see before Memo.configure sometimes flashes memo empty on linux...
 
 #------------------------------------------------------------------------------
 #------------------------------------------------------------------------------
