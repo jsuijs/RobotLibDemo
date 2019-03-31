@@ -147,16 +147,19 @@ def ConvertToFormat(RawData, Format) :
             if c == 'b' :     # byte values
                Value = RawData[0]
                RawData = RawData[1:]
+               if Value > 2**7 : Value -= 2**8
                OutBuffer += str(Value) + '\t'
                continue
             if c == 'w' :     # word values
                Value = RawData[0] + 256 * RawData[1]
                RawData = RawData[2:]
+               if Value > 2**15 : Value -= 2**16
                OutBuffer += str(Value) + '\t'
                continue
             if c == 'i' :     # int values
                Value = RawData[0] + 256 * (RawData[1] + 256 * (RawData[2] + 256 * RawData[3]))
                RawData = RawData[4:]
+               if Value > 2**31 : Value -= 2**32
                OutBuffer += str(Value) + '\t'
                continue
             if c == 'f' :     # float values

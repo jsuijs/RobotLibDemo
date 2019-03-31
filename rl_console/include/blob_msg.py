@@ -23,14 +23,14 @@ class BlobMsg:
       self.MsgOk = False
 
    #---------------------------------------------------------------------------
-   # load message & process it
+   # load (multiline) message & process it
    def LoadMsg(self, InMsgString):
       self.clear()
       self.MsgString = InMsgString
       self.Process()
 
    #---------------------------------------------------------------------------
-   # add line to message, process on msg END
+   # add line to message, process on message END
    # returns true when message has been processed successfully
    def add(self, InString) :
       fields = InString.split()             # whitespace separated
