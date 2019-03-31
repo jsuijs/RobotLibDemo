@@ -62,45 +62,31 @@ def ClickCopyBottom() :
 
 #------------------------------------------------------------------------------
 def ClickCData() :
+   Msg.MetaFormat = MetaDataFormat.get()
+   Msg.LineFormat = LineDataFormat.get()
 
-   StatusMsg("LineData converted.")   # message at top so it can be replaced by errors
+   (Error, List) = Msg.GetLineData()
 
-   MetaLen = blob.CountFormatString(MetaDataFormat.get())
-   if MetaLen < 0 :
-      StatusMsg("Error: invalid MetaDataFormat.")
-      return
+   if Error == "" :
+      Error = "LineData converted." # not really an error...
+   StatusMsg(Error)
 
    if LineDataFormat.get() == 'h' :
-      MemoLoad(BottomMemo, blob.HexDump(Msg.RawData[MetaLen:]))
-      StatusMsg("Conversion to hex done.")
-      return
-
-#   print (CountFormatString(LineDataFormat.get()))
-   Format = LineDataFormat.get()
-   LineLen = blob.CountFormatString(Format)
-   if LineLen == -2 :
-      StatusMsg("Error: invalid LineDataFormat.")
-      return
-
-   if LineLen == 0 :
-      StatusMsg("Error: LineDataFormat must be non-zero.")
-      return
-   r = ConvertToFormat(Msg.RawData[MetaLen:], Format)
-#   print(r)
-   MemoLoad(BottomMemo, r)
+      MemoLoad(BottomMemo, List)
+   else :
+      MemoLoad(BottomMemo, ListToTabbed(List))
 
 #------------------------------------------------------------------------------
 def ClickCMeta() :
-   StatusMsg("MetaData converted.") # message at the top, so it can be replaced by errors
+   Msg.MetaFormat = MetaDataFormat.get()
 
-   Format = MetaDataFormat.get()
-   MetaLen = blob.CountFormatString(Format)
-   if MetaLen < 0 :
-      StatusMsg("Error: invalid MetaDataFormat.")
-      return
+   (Error, List) = Msg.GetMetaData()
 
-   r = ConvertToFormat(Msg.RawData[:MetaLen], Format)
-   MemoLoad(BottomMemo, r)
+   if Error == "" :
+      Error = "MetaData converted." # not really an error...
+   StatusMsg(Error)
+
+   MemoLoad(BottomMemo, ListToTabbed(List))
 
 #------------------------------------------------------------------------------
 def MemoKey(event):
@@ -117,14 +103,7 @@ def DataTakt():
    root.after(100, DataTakt)
    # end of DataTakt
 
-#------------------------------------------------------------------------------
-def ConvertToFormat(RawData, Format) :
-   # convert binary data to requested format
-
-   (Error, List) = blob.ConvertToFormat(RawData, Format)
-
-   if Error != "" :
-      StatusMsg(Error)
+def ListToTabbed(List) :
 
    # convert list of lists to tab-separated multi-line string
    OutBuffer = ''

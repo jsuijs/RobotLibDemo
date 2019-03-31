@@ -107,6 +107,35 @@ class BlobMsg:
       self.MsgString = NewMessage
       self.MsgOk = True
 
+   #---------------------------------------------------------------------------
+   # Get MetaData (status message + list of lists)
+   def GetMetaData(self) :
+
+      MetaLen = CountFormatString(self.MetaFormat)
+      if MetaLen < 0 :
+         return ("Error: invalid MetaDataFormat.", [])
+
+      return ConvertToFormat(self.RawData[:MetaLen], self.MetaFormat)
+
+   #---------------------------------------------------------------------------
+   # Get LineData (status message + list of lists)
+   def GetLineData(self) :
+      MetaLen = CountFormatString(self.MetaFormat)
+      if MetaLen < 0 :
+         return ("Error: invalid MetaDataFormat.", [])
+
+      if self.LineFormat == 'h' :
+         return ("Conversion to hex done.", HexDump(self.RawData[MetaLen:]))
+
+      LineLen = CountFormatString(self.LineFormat)
+      if LineLen == -2 :
+         return ("Error: invalid LineDataFormat.", [])
+
+      if LineLen == 0 :
+         return ("Error: LineDataFormat must be non-zero.", [])
+
+      return ConvertToFormat(self.RawData[MetaLen:], self.LineFormat)
+
 #------------------------------------------------------------------------------
 #------------------------------------------------------------------------------
 # related functions (not methods)
@@ -139,7 +168,6 @@ def ExpandFormatString(FormatString) :
       if Multiplier == 0 : Multiplier = 1
 
       for _ in range(Multiplier):
-#         print("aa ", c, "-", Multiplier)
          NewFormat += c
       Multiplier = 0
 
@@ -235,7 +263,6 @@ def ConvertToFormat(RawData, Format) :
       Error = "Warning: conversion error or no multiple full lines of data."
 
    return (Error, OutList)
-
 
 #------------------------------------------------------------------------------
 # HexDump - convert data string to multi-line text string.
