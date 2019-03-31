@@ -5,7 +5,7 @@
 
 import rl_comms as rl      # RobotLib common code
 from   rl_gui  import *    # RobotLib common code
-from   blob_msg import *
+import blob_msg as blob
 import file_export as FileExport
 import tkinter.scrolledtext as tkst
 
@@ -24,7 +24,7 @@ def ClickPaste() :
 def ClickPasteWorker(Data) :
    global Msg
 
-   Msg = BlobMsg(Data)
+   Msg.LoadMsg(Data)
 
    print(HexDump(Msg.RawData))
    if Msg.MsgOk :
@@ -65,7 +65,7 @@ def ClickCData() :
 
    StatusMsg("LineData converted.")   # message at top so it can be replaced by errors
 
-   MetaLen = CountFormatString(MetaDataFormat.get())
+   MetaLen = blob.CountFormatString(MetaDataFormat.get())
    if MetaLen < 0 :
       StatusMsg("Error: invalid MetaDataFormat.")
       return
@@ -77,7 +77,7 @@ def ClickCData() :
 
 #   print (CountFormatString(LineDataFormat.get()))
    Format = LineDataFormat.get()
-   LineLen = CountFormatString(Format)
+   LineLen = blob.CountFormatString(Format)
    if LineLen == -2 :
       StatusMsg("Error: invalid LineDataFormat.")
       return
@@ -94,7 +94,7 @@ def ClickCMeta() :
    StatusMsg("MetaData converted.") # message at the top, so it can be replaced by errors
 
    Format = MetaDataFormat.get()
-   MetaLen = CountFormatString(Format)
+   MetaLen = blob.CountFormatString(Format)
    if MetaLen < 0 :
       StatusMsg("Error: invalid MetaDataFormat.")
       return
@@ -137,7 +137,7 @@ def HexDump(Data) :
 def ConvertToFormat(RawData, Format) :
    # convert binary data to requested format
 
-   Format = ExpandFormatString(Format)
+   Format = blob.ExpandFormatString(Format)
    OutBuffer = ''
    try :
       while len(RawData) :
@@ -272,7 +272,9 @@ Paned.add(BottomMemo)
 LabelStatus  = tk.Label(root, text="Startup ready.")
 LabelStatus.grid(row=4, column=0,  columnspan=8, sticky=(tk.W))
 
-ClickPasteWorker(TestMsg)
+Msg = blob.BlobMsg()
+
+ClickPasteWorker(blob.TestMsg)
 
 
 #------------------------------------------------------------------------------

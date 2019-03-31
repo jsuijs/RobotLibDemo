@@ -13,9 +13,49 @@ TestMsg += "BLOB BLK 5 +wH3AQ0n9AHxAe8B7AHqAQ0n6AHnAeIBDSfQAfEB2AH2AQ0n8AHoAQ==\
 TestMsg += "BLOB END 21401\n"
 
 class BlobMsg:
-    def __init__(self, InMsgString):
 
-      self.MsgString = InMsgString.replace('Á', '').replace('À', '')
+   def __init__(self):
+      self.clear()
+
+   def clear(self):
+      self.MsgString = ""
+      self.Collecting = False
+      self.MsgOk = False
+
+   #---------------------------------------------------------------------------
+   # load message & process it
+   def LoadMsg(self, InMsgString):
+      self.clear()
+      self.MsgString = InMsgString
+      self.Process()
+
+   #---------------------------------------------------------------------------
+   # add line to message, process on msg END
+   # returns true when message has been processed successfully
+   def add(self, InString) :
+      fields = InString.split()             # whitespace separated
+      if fields[0] != "BLOB" : return       # ignore other messages
+
+      if fields[1] == "START" :
+         # start collecting
+         self.clear()
+         self.Collecting = True
+
+      if self.Collecting :
+         self.MsgString += (InString + "\n")
+
+         if fields[1] == "END" :
+            # message collect complete, so process it
+            self.Collecting = False
+            self.Process()
+            return self.MsgOk
+
+      return False   # no valid message at this time
+
+   #---------------------------------------------------------------------------
+   # Process - check message (msg format and crc) and fields from START record
+   def Process(self) :
+      self.MsgString = self.MsgString.replace('Á', '').replace('À', '')
       self.MsgFlags = 0
       self.MsgOk = False
 

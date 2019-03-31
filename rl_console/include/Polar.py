@@ -6,6 +6,7 @@ Polar plot of MQTT data
 
 import rl_comms as rl      # RobotLib common code
 from   rl_gui  import *    # RobotLib common code
+import blob_msg as blob
 
 import os
 import tkinter as tk
@@ -112,17 +113,23 @@ ClickPause()   # sets windows title
 ConfigData = rl.LoadCfg()
 mqttc = rl.MQttClient(ConfigData['MqttIp'])
 #-----
+BlobMsg = blob.BlobMsg()
 
 def DataTakt():
    #print("DataTakt")
 
-   global PauseFlag, ScreenUpdate
+   global PauseFlag, ScreenUpdate, BlobString
    if PauseFlag != 1 :
       # process messages
       while len(mqttc.MsgQueue) > 0 :
          Message = mqttc.MsgQueue.pop(0)
+
+         if BlobMsg.add(Message) :
+            print(BlobMsg.MsgString)
+
          fields = Message.split()             # whitespace separated
-         if (fields[0] == args.msg) :
+
+         if fields[0] == args.msg :
             print("msg:", len(fields), fields)
 
             fields.pop(0)
