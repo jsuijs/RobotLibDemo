@@ -26,7 +26,7 @@ def ClickPasteWorker(Data) :
 
    Msg.LoadMsg(Data)
 
-   print(HexDump(Msg.RawData))
+   print(blob.HexDump(Msg.RawData))
    if Msg.MsgOk :
       MetaDataFormat.delete(0,tk.END)
       MetaDataFormat.insert(0, Msg.MetaFormat)
@@ -71,7 +71,7 @@ def ClickCData() :
       return
 
    if LineDataFormat.get() == 'h' :
-      MemoLoad(BottomMemo, HexDump(Msg.RawData[MetaLen:]))
+      MemoLoad(BottomMemo, blob.HexDump(Msg.RawData[MetaLen:]))
       StatusMsg("Conversion to hex done.")
       return
 
@@ -118,66 +118,21 @@ def DataTakt():
    # end of DataTakt
 
 #------------------------------------------------------------------------------
-def HexDump(Data) :
-   OutData = ""
-   n = 0
-   while len(Data) :
-      #process in 16 byte chunks
-      b = Data[:16]
-      Data = Data[16:]
-
-      s1 = " ".join([f"{i:02x}" for i in b])
-      s1 = s1[0:23] + " " + s1[23:]
-      s2 = "".join([chr(i) if 32 <= i <= 126 else "." for i in b])
-      OutData += ((f"{n * 16:04x}  {s1:<{48}}  |{s2}|") + "\n")
-      n += 1
-   return OutData
-
-#------------------------------------------------------------------------------
 def ConvertToFormat(RawData, Format) :
    # convert binary data to requested format
 
-   Format = blob.ExpandFormatString(Format)
+   (Error, List) = blob.ConvertToFormat(RawData, Format)
+
+   if Error != "" :
+      StatusMsg(Error)
+
+   # convert list of lists to tab-separated multi-line string
    OutBuffer = ''
-   try :
-      while len(RawData) :
-         for c in Format :
-            c = c.lower()
+   for L in List:
+      for R in L :
+         OutBuffer += str(R) + '\t'
 
-            if c == 'b' :     # byte values
-               Value = RawData[0]
-               RawData = RawData[1:]
-               if Value > 2**7 : Value -= 2**8
-               OutBuffer += str(Value) + '\t'
-               continue
-            if c == 'w' :     # word values
-               Value = RawData[0] + 256 * RawData[1]
-               RawData = RawData[2:]
-               if Value > 2**15 : Value -= 2**16
-               OutBuffer += str(Value) + '\t'
-               continue
-            if c == 'i' :     # int values
-               Value = RawData[0] + 256 * (RawData[1] + 256 * (RawData[2] + 256 * RawData[3]))
-               RawData = RawData[4:]
-               if Value > 2**31 : Value -= 2**32
-               OutBuffer += str(Value) + '\t'
-               continue
-            if c == 'f' :     # float values
-               IntValue = RawData[0] + 256 * (RawData[1] + 256 * (RawData[2] + 256 * RawData[3]))
-               RawData = RawData[4:]
-
-               import anyfloat as anfl
-               af = anfl.anyfloat.from_ieee(IntValue, (8, 23))
-               OutBuffer += str(float(af)) + '\t'
-               continue
-
-            print("Error: unknown format char (", c, ")")
-            return
-
-         OutBuffer = OutBuffer[:-1] + "\n" # change last tab to line end, each time the format string has been processed
-
-   except:
-      StatusMsg("Warning: conversion errors or no multiple full lines of data.")
+      OutBuffer = OutBuffer[:-1] + "\n" # change last tab to line end, each time the format string has been processed
 
    return OutBuffer
 

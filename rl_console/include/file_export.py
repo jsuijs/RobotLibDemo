@@ -1,20 +1,6 @@
 #!/usr/bin/python3
 # -*- coding: cp1252 -*-
-
-def HexDump(Data) :
-   OutData = ""
-   n = 0
-   while len(Data) :
-      #process in 16 byte chunks
-      b = Data[:16]
-      Data = Data[16:]
-
-      s1 = " ".join([f"{i:02x}" for i in b])
-      s1 = s1[0:23] + " " + s1[23:]
-      s2 = "".join([chr(i) if 32 <= i <= 126 else "." for i in b])
-      OutData += ((f"{n * 16:04x}  {s1:<{48}}  |{s2}|") + "\n")
-      n += 1
-   return OutData
+import blob_msg as blob
 
 def Export(MessageBuffer, FormatString) :
 
@@ -71,7 +57,7 @@ def Export(MessageBuffer, FormatString) :
 
    # start processing of data.
    if NewFormat == 'h' :
-      return HexDump(RawData)
+      return blob.HexDump(RawData)
 
    # convert binary data to requested format
    while len(RawData) :

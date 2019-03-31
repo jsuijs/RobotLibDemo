@@ -182,3 +182,74 @@ def CountFormatString(FormatString) :
 
       return -2 # invalid char
    return Length
+
+#------------------------------------------------------------------------------
+# convert RawData to list of lists, based on Format
+def ConvertToFormat(RawData, Format) :
+   # convert binary data to requested format
+   Error = ""
+
+   Format = ExpandFormatString(Format)
+   OutList = []
+   OutRecords = []
+   try :
+      while len(RawData) :
+         for c in Format :
+            c = c.lower()
+
+            if c == 'b' :     # byte values
+               Value = RawData[0]
+               RawData = RawData[1:]
+               if Value > 2**7 : Value -= 2**8
+               OutRecords.append(Value)
+               continue
+            if c == 'w' :     # word values
+               Value = RawData[0] + 256 * RawData[1]
+               RawData = RawData[2:]
+               if Value > 2**15 : Value -= 2**16
+               OutRecords.append(Value)
+               continue
+            if c == 'i' :     # int values
+               Value = RawData[0] + 256 * (RawData[1] + 256 * (RawData[2] + 256 * RawData[3]))
+               RawData = RawData[4:]
+               if Value > 2**31 : Value -= 2**32
+               OutRecords.append(Value)
+               continue
+            if c == 'f' :     # float values
+               IntValue = RawData[0] + 256 * (RawData[1] + 256 * (RawData[2] + 256 * RawData[3]))
+               RawData = RawData[4:]
+
+               import anyfloat as anfl
+               af = anfl.anyfloat.from_ieee(IntValue, (8, 23))
+               OutRecords.append(float(af))
+               continue
+
+            # this should have been detected when lenght of format string is checked...
+            Error = "Error: unknown format char (" + c + ")"
+            return (Error, OutList)
+
+         OutList.append(OutRecords)
+         OutRecords = []
+
+   except:
+      Error = "Warning: conversion error or no multiple full lines of data."
+
+   return (Error, OutList)
+
+
+#------------------------------------------------------------------------------
+# HexDump - convert data string to multi-line text string.
+def HexDump(Data) :
+   OutData = ""
+   n = 0
+   while len(Data) :
+      #process in 16 byte chunks
+      b = Data[:16]
+      Data = Data[16:]
+
+      s1 = " ".join([f"{i:02x}" for i in b])
+      s1 = s1[0:23] + " " + s1[23:]
+      s2 = "".join([chr(i) if 32 <= i <= 126 else "." for i in b])
+      OutData += ((f"{n * 16:04x}  {s1:<{48}}  |{s2}|") + "\n")
+      n += 1
+   return OutData
