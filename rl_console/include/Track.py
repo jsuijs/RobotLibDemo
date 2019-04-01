@@ -9,6 +9,7 @@ import time
 
 import rl_comms as rl      # RobotLib common code
 from   rl_gui  import *    # RobotLib common code
+import blob_msg as blob
 
 
 class MyScreen(tk.Frame):
@@ -285,7 +286,7 @@ class MyScreen(tk.Frame):
    #    1: Group1
    #    2: Group2
    #    3: Group3
-   # Note: internal representation is n-1 (so trail == 0)
+   # Note: internal representation is n+1 (so trail == 0)
    #
    # Commands:
    #  POINT Erase <groups>       - erase all points in <list>
@@ -294,15 +295,15 @@ class MyScreen(tk.Frame):
    #  POINT <groups> => this is valid, but can be ignored
    #                    (no points provided)
    #  Note: comma's are treated as spaces. Use comma as separator
-   #        between x and y improves human readibilty.
+   #        between x and y to improve human readibilty.
    # -------------------------------------------------------------
    def PointMessage(self, InString):
 
       print("In: ", InString)
 
-      # remove (for  our purpose) irrelevant chars
+      # remove (for our purpose) irrelevant chars
       InString = InString.replace(",", " ")     # allow for comma separate x,y
-      InString = InString.replace(" +", " ")    # remove multple spaces
+      InString = InString.replace(" +", " ")    # remove multiple spaces
       fields   = InString.split()               # whitespace separted
 
       try:
@@ -360,14 +361,45 @@ if __name__ == "__main__":
    #------------------------------------------
    # MQTT START (after Screen & Data setup)
    mqttc = rl.MQttClient(ConfigData['MqttIp'])
+   BlobMsg = blob.BlobMsg()
 
    def DataTakt():
       UpdatePosition = 0
       if len(mqttc.MsgQueue) > 0 :
          while len(mqttc.MsgQueue) > 0 :
             Message = mqttc.MsgQueue.pop(0)
+
+            if BlobMsg.add(Message) :
+
+               if BlobMsg.Destination == "POINTS" :
+
+                  # get datapoints
+                  (String, Data) = BlobMsg.GetMetaData()
+                  if String != "" :
+                     print("BlobMsg.GetMetaData:", String)
+
+                  GroupNr = 1
+                  print(Data)
+                  if len(Data) :
+                     Data = Data[0]
+                     if len(Data) :
+                        GroupNr = Data[0]
+                        print("GroupNr:", GroupNr)
+                  GroupNr += 1 # internal representation = external + 1
+
+                  # get datapoints
+                  (String, Data) = BlobMsg.GetLineData()
+                  if String != "" :
+                     print("BlobMsg.GetLineData:", String)
+
+                  # add points
+                  for s in Data :
+                     Screen.AddPoint(GroupNr, s[0], s[1])
+
+               continue # end of BlobMsg processing
+
             fields = Message.split()             # whitespace separated
-            print("msg: ", Message, "fields:", fields)
+            #print("msg: ", Message, "fields:", fields)
 
             #---------------
             # POSITION message
