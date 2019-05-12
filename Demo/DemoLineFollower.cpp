@@ -102,7 +102,7 @@ void DefaultDemoSetup()
    // the robot will try to find the line again. It will turn
    // left or right, depending on the last line value.
    LineFollower.RegainLineTicks   = 200;  // Try to find the line for this many ticks
-   LineFollower.RegainCorrect     = 10;   // +/- degrees, relative to current heading
+   LineFollower.RegainCorrect     = 30;   // +/- degrees/sec
 }
 
 //-----------------------------------------------------------------------------
