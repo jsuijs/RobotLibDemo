@@ -7,6 +7,7 @@ import tkinter.scrolledtext as tkst
 
 import os
 import time
+import datetime
 import sys
 
 MySlip            = rl.FrameDecoder()  # only for the constants
@@ -35,9 +36,23 @@ def LogStart():
    LogStart.Flag = True
    BtnLogStart["text"]  = "LogRestart"
    BtnLogEnd["text"]    = "LogEnd"
+
 LogStart.Flag = False # on startup, we're not logging.
 
 def LogEnd():
+   # save log (current, all) using default filename (from config file)
+   LogEndWorker(ConfigData['Terminal']['LogFile'])
+
+def LogEndRightClick(event):
+   # save log (current, all) and let user picks filename
+   # default filename contains data and time prefix.
+   # (do not use filename from config file, since that might
+   #  contain path thus breaking the stamp prefixing)
+   Filename = datetime.datetime.now().strftime("%Y%m%d %H.%M Logfile.txt")
+   Filename = tk.filedialog.asksaveasfilename(title = "Select file for save",filetypes = (("log files","*.txt"),("all files","*.*")), initialfile=Filename)
+   LogEndWorker(Filename)
+
+def LogEndWorker(Filename):
    if LogStart.Flag:
       # we're logging => logend
       # save
@@ -50,7 +65,7 @@ def LogEnd():
 
    else :
       # not logging => SaveAll
-      File = open(ConfigData['Terminal']['LogFile'], "w", encoding="cp1252", errors='ignore')
+      File = open(Filename, "w", encoding="cp1252", errors='ignore')
       t = Memo.get('1.0', tk.END) # line 1, position 0 => beginning of text
       File.write(t)
       File.close()
@@ -58,10 +73,10 @@ def LogEnd():
    # launch file
    import platform
    if platform.system() == 'Windows' :
-      os.startfile(ConfigData['Terminal']['LogFile'])
+      os.startfile(Filename)
    else :
       import subprocess
-      subprocess.call(["xdg-open", ConfigData['Terminal']['LogFile']])
+      subprocess.call(["xdg-open", Filename])
 
 def Uploader():
    global UploaderLines
@@ -233,6 +248,8 @@ BtnAbort    = tk.Button(master, text='Abort',    command=Abort)
 BtnFrames   = tk.Checkbutton(master, text='Frames', variable=CbValueFrames, relief='raised')
 BtnFrames.select()
 
+BtnLogEnd.bind("<Button-3>", LogEndRightClick)
+
 Memo['state']='disabled'
 BtnAbort['state'] = 'disabled'
 
@@ -246,7 +263,7 @@ BtnFrames.grid(     row=0, column=6, sticky=tk.W, pady=4)
 
 createToolTip(BtnQuit,     "Quit program")
 createToolTip(BtnLogStart, "(Re)start logging")
-createToolTip(BtnLogEnd,   "Close logfile & open in editor")
+createToolTip(BtnLogEnd,   "Close logfile & open in editor, right click for (stamped) filename selection")
 createToolTip(BtnUpload,   "Upload file to serial)")
 createToolTip(BtnPlayer,   "Replay (log)file (publish like received from serial)")
 createToolTip(BtnAbort,    "Abort Upload and Replay")
