@@ -62,7 +62,11 @@ def quit():
 # combine tkinter & plots:
 # https://hardsoftlucid.wordpress.com/various-stuff/realtime-plotting/https://hardsoftlucid.wordpress.com/various-stuff/realtime-plotting/
 #import tkinter as tk
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2TkAgg
+try:
+   from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2TkAgg
+except:
+   from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+   from matplotlib.backends.backend_tkagg import NavigationToolbar2Tk as  NavigationToolbar2TkAgg
 
 def CreateTkRoot() :
    global root    # create copy of root in this namespace for quit
@@ -73,7 +77,7 @@ def CreateTkRoot() :
 def AddFigToCanvas(fig):
    global root
    canvas = FigureCanvasTkAgg(fig, master=root)
-   canvas.show()
+   canvas.draw()
    canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=1)
 
    toolbar = NavigationToolbar2TkAgg( canvas, root )

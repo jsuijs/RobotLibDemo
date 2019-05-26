@@ -5,6 +5,14 @@ from __future__ import print_function
 
 # sudo apt-get install python-serial
 # sudo apt-get install python3-serial
+
+#-------------------------------------------------------
+# collect modules for all robotlib console scripts here:
+#  python -m pip install pyserial
+#  python -m pip install paho-mqtt
+#  python -m pip install matplotlib
+#-------------------------------------------------------
+
 import serial
 from serial.tools import list_ports
 
@@ -36,7 +44,7 @@ class SerialBridge:
          ports.sort()
          for p in ports:
             print(p)
-         raise SystemExit
+         raise SystemExit(99)
 
       # setup mqtt
       self.MqttClient = rl.MQttClient(self.ConfigData['MqttIp'], "Robotlib/ComRawTx")
