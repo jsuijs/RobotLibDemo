@@ -11,7 +11,6 @@ import tkinter.scrolledtext as tkst
 
 import os, time, sys
 
-
 #------------------------------------------------------------------------------
 def ReadListFile(FileName) :
    print("ReadListFile '" + FileName + "'")
@@ -134,13 +133,11 @@ def ShowSourceLocation(MemAddr) :
          Memo.insert(tk.END, Line)
       Start += 1
 
-
 #------------------------------------------------------------------------------
 def StatusMsg(data) :
    data = str(data).rstrip()
    print("StatusMsg:", data)
    LabelStatus['text']  = data
-
 
 #------------------------------------------------------------------------------
 def ClickCMeta() :
@@ -152,8 +149,6 @@ def ClickCMeta() :
       Error = "MetaData converted." # not really an error...
    StatusMsg(Error)
 
-
-
 #------------------------------------------------------------------------------
 def DataTakt():
    #print("DataTakt")
@@ -163,7 +158,25 @@ def DataTakt():
       ShowSourceLocation(Teller)
       Teller += 1
 
-   root.after(100, DataTakt)
+
+   # process messages
+   while len(mqttc.MsgQueue) > 0 :
+      Message = mqttc.MsgQueue.pop(0)
+      fields = Message.split()             # whitespace separated
+      if fields[0] == "BASIC_TRC" :
+         print("msg:", len(fields), fields)
+#         LabelRobotName['text'] = fields[1]
+#         if fields[2] == "2017-01-01" :
+#            # clockset  dd mm yyyy hh mm ss - set clock date & time
+#            Data = datetime.datetime.now().strftime("clockset %d %m %Y %H %M %S\r")
+#            MemoAdd("Send time: " + Data)
+#            mqttc.mqttc.publish("Robotlib/ComRawTx", Data)
+         continue
+
+
+
+
+   root.after(20, DataTakt)
    # end of DataTakt
 Teller = 0
 
@@ -178,8 +191,11 @@ def main(): # dummy for Ultraedit function list
 # main at root level.
 
 print('Number of arguments:', len(sys.argv), 'arguments.')
-print('Argument List:',sys.argv[1], sys.argv[2])
-sys.exit(0)
+print('Argument List:', sys.argv[1], sys.argv[2])
+
+if len(sys.argv) != 3:
+   print("Use:", sys.argv[0], "<cfg_file_name> <list_file_name>")
+   sys.exit(0)
 
 root = tk.Tk()
 root.wm_title(os.path.basename(__file__))
@@ -188,7 +204,7 @@ root.wm_title(os.path.basename(__file__))
 root.columnconfigure(7, weight = 3 )
 root.rowconfigure(3, weight = 3 )
 
-ConfigData = rl.LoadCfg()
+ConfigData = rl.LoadCfg(sys.argv[1])
 
 # print path - implies check of config data
 print("File root: ", ConfigData['FileService']['FileRoot'])
@@ -242,7 +258,7 @@ LabelStatus.grid(row=4, column=0,  columnspan=8, sticky=(tk.W))
 # -----------------------------------------------------------------------------
 FileName = "p1.txt"
 FileName = "Opdracht2.lst"
-ReadListFile(FileName)
+ReadListFile(sys.argv[2])
 
 
 #------------------------------------------------------------------------------
