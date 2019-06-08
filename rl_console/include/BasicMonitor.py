@@ -154,7 +154,7 @@ def DataTakt():
    #print("DataTakt")
 
    global Teller
-   if Teller < 1000 :
+   if Teller < 100 :
       ShowSourceLocation(Teller)
       Teller += 1
 
@@ -173,13 +173,18 @@ def DataTakt():
 #            mqttc.mqttc.publish("Robotlib/ComRawTx", Data)
          continue
 
-
-
+   # reload file on change
+   global FileTime
+   NewTime = os.stat(sys.argv[2]).st_mtime
+   if FileTime == 0 : FileTime = NewTime
+   if NewTime != FileTime :
+      NewTime = FileTime
+      ReadListFile(ListFileName)
 
    root.after(20, DataTakt)
    # end of DataTakt
 Teller = 0
-
+FileTime = 0
 
 #------------------------------------------------------------------------------
 #------------------------------------------------------------------------------
@@ -190,21 +195,25 @@ def main(): # dummy for Ultraedit function list
    pass
 # main at root level.
 
-print('Number of arguments:', len(sys.argv), 'arguments.')
-print('Argument List:', sys.argv[1], sys.argv[2])
+#print('Number of arguments:', len(sys.argv), 'arguments.')
+#print('Argument List:', sys.argv[1], sys.argv[2])
 
 if len(sys.argv) != 3:
    print("Use:", sys.argv[0], "<cfg_file_name> <list_file_name>")
    sys.exit(0)
 
+CfgFileName =  sys.argv[1]
+ListFileName = sys.argv[2]
+
+#------------------------------------------------------------------------------
 root = tk.Tk()
-root.wm_title(os.path.basename(__file__))
+root.wm_title(os.path.basename(__file__) + ' - ' + ListFileName)
 
 # resize stuff
 root.columnconfigure(7, weight = 3 )
 root.rowconfigure(3, weight = 3 )
 
-ConfigData = rl.LoadCfg(sys.argv[1])
+ConfigData = rl.LoadCfg(CfgFileName)
 
 # print path - implies check of config data
 print("File root: ", ConfigData['FileService']['FileRoot'])
@@ -220,14 +229,12 @@ BtnCData      = tk.Button(HBBar, text='C-Data') #,  command=ClickCData)
 BtnCData.pack(side=tk.LEFT)
 createToolTip(BtnCData,"Convert data of message in top window, result in lower window")
 
-
 tk.Label(HBBar, text="  Conversion formats:").pack(side=tk.LEFT)
 
 MetaDataFormat = tk.Entry(HBBar, width=10)
 MetaDataFormat.pack(side=tk.LEFT)
 MetaDataFormat.insert(0, "-")
 createToolTip(MetaDataFormat,  "MetaData Conversion format (b, w, i, f, number as multiplier)")
-
 
 #------------------------------------------------------------------------------
 # Vertical (right hand) bar + buttons
@@ -237,7 +244,6 @@ VBBar.grid(row=1, column=9, rowspan=3, sticky=(tk.N, tk.E, tk.S, tk.W))
 B = tk.Button(VBBar, text='Paste') #,   command=ClickPaste)
 B.pack(side=tk.TOP)
 createToolTip(B,"Paste from clipboard to top (message) window.")
-
 
 #------------------------------------------------------------------------------
 # Paned (resizable) window with 2 memo fields
@@ -254,12 +260,8 @@ Memo.tag_config("highlight", background="dodger blue", foreground="white")
 LabelStatus  = tk.Label(root, text="Startup ready.")
 LabelStatus.grid(row=4, column=0,  columnspan=8, sticky=(tk.W))
 
-
 # -----------------------------------------------------------------------------
-FileName = "p1.txt"
-FileName = "Opdracht2.lst"
-ReadListFile(sys.argv[2])
-
+ReadListFile(ListFileName)
 
 #------------------------------------------------------------------------------
 # drive GUI
