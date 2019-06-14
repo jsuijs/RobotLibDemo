@@ -94,6 +94,9 @@ def ReadListFile(FileName) :
       for i in Addresses :
          print(i, MemoryRecords[i])
 
+   # force display of new source data
+   ShowSourceLocation(0)
+
 #------------------------------------------------------------------------------
 def ShowSourceLocation(MemAddr) :
 
@@ -153,11 +156,6 @@ def ClickCMeta() :
 def DataTakt():
    #print("DataTakt")
 
-   global Teller
-   if Teller < 100 :
-      ShowSourceLocation(Teller)
-      Teller += 1
-
 
    # process messages
    while len(mqttc.MsgQueue) > 0 :
@@ -165,25 +163,24 @@ def DataTakt():
       fields = Message.split()             # whitespace separated
       if fields[0] == "BASIC_TRC" :
          print("msg:", len(fields), fields)
-#         LabelRobotName['text'] = fields[1]
-#         if fields[2] == "2017-01-01" :
-#            # clockset  dd mm yyyy hh mm ss - set clock date & time
-#            Data = datetime.datetime.now().strftime("clockset %d %m %Y %H %M %S\r")
-#            MemoAdd("Send time: " + Data)
-#            mqttc.mqttc.publish("Robotlib/ComRawTx", Data)
+
+         ShowSourceLocation(int(fields[2]))
          continue
 
    # reload file on change
    global FileTime
-   NewTime = os.stat(sys.argv[2]).st_mtime
-   if FileTime == 0 : FileTime = NewTime
-   if NewTime != FileTime :
-      NewTime = FileTime
-      ReadListFile(ListFileName)
+   try :
+      NewTime = os.stat(sys.argv[2]).st_mtime
+      if FileTime == 0 : FileTime = NewTime
+      if FileTime != NewTime :
+         FileTime = NewTime
+         ReadListFile(ListFileName)
+         print("file reloaded")
+   except:
+      print("file load error")
 
    root.after(20, DataTakt)
    # end of DataTakt
-Teller = 0
 FileTime = 0
 
 #------------------------------------------------------------------------------
@@ -254,13 +251,13 @@ Memo = tkst.ScrolledText(root, height=40, width=80, wrap="none", bg="#f8d4ce")
 Memo.grid(row=3, column=0, columnspan=8, sticky=(tk.N, tk.E, tk.S, tk.W))
 Memo.tag_config("highlight", background="dodger blue", foreground="white")
 
-
 #------------------------------------------------------------------------------
 # bottom line
 LabelStatus  = tk.Label(root, text="Startup ready.")
 LabelStatus.grid(row=4, column=0,  columnspan=8, sticky=(tk.W))
 
 # -----------------------------------------------------------------------------
+# first time load here, without try so program fails if input does not exist.
 ReadListFile(ListFileName)
 
 #------------------------------------------------------------------------------
