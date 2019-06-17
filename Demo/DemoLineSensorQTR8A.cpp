@@ -1,7 +1,7 @@
 //-----------------------------------------------------------------------------
 // DemoLineSensorQTR8A.cpp
 //
-// Copyright (c) 2013-2018 Joep Suijs - All rights reserved.
+// Copyright (c) 2013-2019 Joep Suijs - All rights reserved.
 //
 // This demo shows how to use the LineSensor.
 //
@@ -20,7 +20,7 @@
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
-// along with RobotLib.  If not, see <http://www.gnu.org/licenses/>.
+// along with RobotLib. If not, see <http://www.gnu.org/licenses/>.
 //
 // See http://wiki.robotmc.be/index.php?title=RobotLib for more information.
 //-----------------------------------------------------------------------------
@@ -111,13 +111,14 @@ void DefaultDemoSetup()
    // if load fails, set defaults
    if (LineSensor.NeedDefaults()) {
       LineSensor.SetCalibration(220,580);  // put your own calibration values here
+      // Reverse depends on sensor and background.
+      // For QTR8A, default (Reverse == false) means dark line on light background.
+      LineSensor.Reverse = false;
    }
 
    // Sensor on (not off, not calibration)
    LineSensor.On();
 
-   // Reverse = light line on dark background.
-   LineSensor.Reverse = false;   // default false => dark line on light background
 }
 
 //-----------------------------------------------------------------------------
