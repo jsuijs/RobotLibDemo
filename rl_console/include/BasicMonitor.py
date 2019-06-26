@@ -14,11 +14,12 @@ import os, time, sys
 #------------------------------------------------------------------------------
 def ReadListFile(FileName) :
    print("ReadListFile '" + FileName + "'")
-   global Sources, Addresses, MemoryRecords
+   global Sources, VarList, Addresses, MemoryRecords
 
    Sources = {}
    SourceName = "UnKnown_error"
    MemoryLines = []
+   VarList = {}
 
    Mode = 0
 
@@ -32,10 +33,11 @@ def ReadListFile(FileName) :
       # collect sources
       #----------------
       if L.startswith("**** SOURCE") :
+         # new source file
          if Mode == 1 :
-            # we're scanning, so save result
+            # we're scanning, so save lines of previous sourcefile
             Sources[SourceName] = SourceLines
-         # setup to collect (next) source lines
+         # setup to collect lines of (next) sourcefile
          Mode = 1
          SourceName = Fields[2]
          SourceLines = []
@@ -45,9 +47,9 @@ def ReadListFile(FileName) :
          if Mode != 1 :
             print("Error scanning sources")
             sys.exit(0)
-         # store last source and move to next mode (data)
+         # store lines of last sourcefile and move to next mode (vars)
          Sources[SourceName] = SourceLines
-         Mode = 10
+         Mode = 5
 
       if Mode == 1 :
          i = L.find('#')
@@ -55,8 +57,27 @@ def ReadListFile(FileName) :
             SourceLines.append(L[i+1:])
 
       #--------------------
+      # collect var info
+      #--------------------
+      if Mode == 5 :
+         if L.startswith("#### VARS") :
+            Mode = 6
+            continue
+
+      if Mode == 6 :
+         if L.startswith("#### END of VARS") :
+            # end of vars
+            Mode = 10
+            continue
+         # must be a var line, like 'S 0002 c'
+         VarList[int(Fields[1])] = Fields[2]
+         print(Fields, int(Fields[1]), Fields[2])
+         continue
+
+      #--------------------
       # collect memory info
       #--------------------
+      # MemoryLines look like: Test_A.upb:1:6 0007 [f00c]
       if Mode == 10 :
          if L.startswith(";----------------------------------------------") :
             # trigger, next line is info
@@ -80,6 +101,8 @@ def ReadListFile(FileName) :
    #print(LineList)
    MemoryRecords = {}
    for L in MemoryLines :
+      # convert 'Test_A.upb:1:6 0007 [f00c]'
+      # to MemoryRecords[7] = 'Test_A.upb:1:6'
       Fields = L.split()
       i = int(Fields[1], 16)
       MemoryRecords[i] = Fields[0]
@@ -155,7 +178,7 @@ def ClickCMeta() :
 #------------------------------------------------------------------------------
 def DataTakt():
    #print("DataTakt")
-
+   global VarList
 
    # process messages
    while len(mqttc.MsgQueue) > 0 :
@@ -165,6 +188,10 @@ def DataTakt():
          print("msg:", len(fields), fields)
 
          ShowSourceLocation(int(fields[2]))
+         fields = fields[4:]  # remove fixed part
+         while len(fields) > 1 : # loop through address/value pairs
+            print("Addr:", fields[0], "Name:", VarList[int(fields[0])], "Data:", fields[1]);
+            fields = fields[2:]
          continue
 
    # reload file on change
@@ -197,7 +224,7 @@ def main(): # dummy for Ultraedit function list
 
 if len(sys.argv) != 3:
    print("Use:", sys.argv[0], "<cfg_file_name> <list_file_name>")
-   sys.exit(0)
+   sys.exit(1)
 
 CfgFileName =  sys.argv[1]
 ListFileName = sys.argv[2]
