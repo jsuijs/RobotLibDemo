@@ -70,7 +70,7 @@ def ReadListFile(FileName) :
             Mode = 10
             continue
          # must be a var line, like 'S 0002 c'
-         VarList[int(Fields[1])] = Fields[2]
+         VarList[Fields[2]]  = int(Fields[1])
          print(Fields, int(Fields[1]), Fields[2])
          continue
 
@@ -119,6 +119,11 @@ def ReadListFile(FileName) :
 
    # force display of new source data
    ShowSourceLocation(0)
+
+   print(VarList.keys())
+   SetOptions(Pd1, Pd1TkStr, ChangePd1, ["-", *VarList.keys()])
+   SetOptions(Pd2, Pd2TkStr, ChangePd2, ["-", *VarList.keys()])
+   SetOptions(Pd3, Pd3TkStr, ChangePd3, ["-", *VarList.keys()])
 
 #------------------------------------------------------------------------------
 def ShowSourceLocation(MemAddr) :
@@ -187,11 +192,39 @@ def DataTakt():
       if fields[0] == "BASIC_TRC" :
          print("msg:", len(fields), fields)
 
+         #----------------------------
+         # field 1 = status flags
+         # field 2 = address
+         # field 3 = basic load
+         # next: addr/data field pairs
+         #----------------------------
+
          ShowSourceLocation(int(fields[2]))
+
+         # Only show one of the status strings
+         if int(fields[1]) & 1 : String = "Run"
+         if int(fields[1]) & 2 : String = "Sleep"
+         if int(fields[1]) & 4 : String = "Done"
+         String = "Status: " + String + " (Load: " + fields[3] + "%)"
+         StatusMsg(String)
+
          fields = fields[4:]  # remove fixed part
+
+         # remove old values
+         Pd1Value['text'] = ""
+         Pd2Value['text'] = ""
+         Pd3Value['text'] = ""
+
          while len(fields) > 1 : # loop through address/value pairs
-            print("Addr:", fields[0], "Name:", VarList[int(fields[0])], "Data:", fields[1]);
-            fields = fields[2:]
+            print("Addr:", fields[0], "Data:", fields[1]);
+            if Pd1TkStr.get() in VarList :
+               if VarList[Pd1TkStr.get()] == int(fields[0]) : Pd1Value['text'] = fields[1]
+            if Pd2TkStr.get() in VarList :
+               if VarList[Pd2TkStr.get()] == int(fields[0]) : Pd2Value['text'] = fields[1]
+            if Pd3TkStr.get() in VarList :
+               if VarList[Pd3TkStr.get()] == int(fields[0]) : Pd3Value['text'] = fields[1]
+
+            fields = fields[2:] # setup for next pair
          continue
 
    # reload file on change
@@ -209,6 +242,17 @@ def DataTakt():
    root.after(20, DataTakt)
    # end of DataTakt
 FileTime = 0
+
+
+#------------------------------------------------------------------------------
+# to change the options of PD menu (var list)
+def SetOptions(PD, tkvar, ChangePD, Options) :
+   m = PD.children['menu']
+   tkvar.set(Options[0])
+   m.delete(0, 'end')
+   for i in Options:
+      m.add_command(label=i, command=lambda x=i: ChangePD(x))
+
 
 #------------------------------------------------------------------------------
 #------------------------------------------------------------------------------
@@ -253,9 +297,9 @@ BtnCData      = tk.Button(HBBar, text='C-Data') #,  command=ClickCData)
 BtnCData.pack(side=tk.LEFT)
 createToolTip(BtnCData,"Convert data of message in top window, result in lower window")
 
-tk.Label(HBBar, text="  Conversion formats:").pack(side=tk.LEFT)
+tk.Label(HBBar, text="Load:").pack(side=tk.LEFT)
 
-MetaDataFormat = tk.Entry(HBBar, width=10)
+MetaDataFormat = tk.Entry(HBBar, width=6)
 MetaDataFormat.pack(side=tk.LEFT)
 MetaDataFormat.insert(0, "-")
 createToolTip(MetaDataFormat,  "MetaData Conversion format (b, w, i, f, number as multiplier)")
@@ -265,9 +309,36 @@ createToolTip(MetaDataFormat,  "MetaData Conversion format (b, w, i, f, number a
 VBBar = tk.Frame(height=2, bd=1, relief=tk.SUNKEN)
 VBBar.grid(row=1, column=9, rowspan=3, sticky=(tk.N, tk.E, tk.S, tk.W))
 
-B = tk.Button(VBBar, text='Paste') #,   command=ClickPaste)
+B = tk.Label(VBBar, text="VARS")
 B.pack(side=tk.TOP)
-createToolTip(B,"Paste from clipboard to top (message) window.")
+createToolTip(B,"Variable inspector")
+
+# Create a Tkinter variable
+Pd1TkStr = tk.StringVar(root)
+Pd2TkStr = tk.StringVar(root)
+Pd3TkStr = tk.StringVar(root)
+
+Pd1 = tk.OptionMenu(VBBar, Pd1TkStr, "-")
+Pd2 = tk.OptionMenu(VBBar, Pd2TkStr, "-")
+Pd3 = tk.OptionMenu(VBBar, Pd3TkStr, "-")
+
+Pd1Value = tk.Label(VBBar, text="", width=10)
+Pd2Value = tk.Label(VBBar, text="", width=10)
+Pd3Value = tk.Label(VBBar, text="", width=10)
+
+Pd1.pack(side=tk.TOP)
+Pd1Value.pack(side=tk.TOP)
+Pd2.pack(side=tk.TOP)
+Pd2Value.pack(side=tk.TOP)
+Pd3.pack(side=tk.TOP)
+Pd3Value.pack(side=tk.TOP)
+
+# change fuction for each PulDownList
+def ChangePd1(x) : Pd1TkStr.set(x) ; Pd1Value['text'] = ""
+def ChangePd2(x) : Pd2TkStr.set(x) ; Pd2Value['text'] = ""
+def ChangePd3(x) : Pd3TkStr.set(x) ; Pd3Value['text'] = ""
+
+# PullDown lists are filled by ReadListFile
 
 #------------------------------------------------------------------------------
 # Paned (resizable) window with 2 memo fields
