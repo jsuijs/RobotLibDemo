@@ -120,10 +120,11 @@ def ReadListFile(FileName) :
    # force display of new source data
    ShowSourceLocation(0)
 
-   print(VarList.keys())
-   SetOptions(Pd1, Pd1TkStr, ChangePd1, ["-", *VarList.keys()])
-   SetOptions(Pd2, Pd2TkStr, ChangePd2, ["-", *VarList.keys()])
-   SetOptions(Pd3, Pd3TkStr, ChangePd3, ["-", *VarList.keys()])
+   OptionList = ["-", *sorted(VarList.keys())]
+   print("Set optionlist to", OptionList)
+   SetOptionList(Pd1, Pd1TkStr, ChangePd1, OptionList)
+   SetOptionList(Pd2, Pd2TkStr, ChangePd2, OptionList)
+   SetOptionList(Pd3, Pd3TkStr, ChangePd3, OptionList)
 
 #------------------------------------------------------------------------------
 def ShowSourceLocation(MemAddr) :
@@ -246,13 +247,32 @@ FileTime = 0
 
 #------------------------------------------------------------------------------
 # to change the options of PD menu (var list)
-def SetOptions(PD, tkvar, ChangePD, Options) :
+def SetOptionList(PD, tkvar, ChangePD, Options) :
+
+   # remove options and add new ones
    m = PD.children['menu']
-   tkvar.set(Options[0])
    m.delete(0, 'end')
    for i in Options:
       m.add_command(label=i, command=lambda x=i: ChangePD(x))
 
+   # check if current selection is still valid
+   if not tkvar.get() in Options :
+      # no -> set to first entry
+      tkvar.set(Options[0])
+
+#------------------------------------------------------------------------------
+# Tell robot which vars to send
+def SetTraceVars() :
+   V1 = -1
+   if Pd1TkStr.get() in VarList.keys() : V1 = VarList[Pd1TkStr.get()]
+   V2 = -1
+   if Pd2TkStr.get() in VarList.keys() : V2 = VarList[Pd2TkStr.get()]
+   V3 = -1
+   if Pd3TkStr.get() in VarList.keys() : V3 = VarList[Pd3TkStr.get()]
+   print(VarList)
+   Msg = "basic tracevars " + str(V1) + " " + str(V2) + " " + str(V3) + "\r"
+   print(Msg)
+   mqttc.mqttc.publish("Robotlib/ComRawTx", Msg.encode())
 
 #------------------------------------------------------------------------------
 #------------------------------------------------------------------------------
@@ -288,22 +308,22 @@ print("File root: ", ConfigData['FileService']['FileRoot'])
 
 mqttc = rl.MQttClient(ConfigData['MqttIp']) # setup & connect MQtt client to receive messages from robot
 
-#------------------------------------------------------------------------------
-# Horizontal (top) bar + Conversion button & formats
-HBBar = tk.Frame(height=2, bd=1, relief=tk.SUNKEN)
-HBBar.grid(row=0, column=0, columnspan=10, sticky=(tk.N, tk.E, tk.S, tk.W))
-
-BtnCData      = tk.Button(HBBar, text='C-Data') #,  command=ClickCData)
-BtnCData.pack(side=tk.LEFT)
-createToolTip(BtnCData,"Convert data of message in top window, result in lower window")
-
-tk.Label(HBBar, text="Load:").pack(side=tk.LEFT)
-
-MetaDataFormat = tk.Entry(HBBar, width=6)
-MetaDataFormat.pack(side=tk.LEFT)
-MetaDataFormat.insert(0, "-")
-createToolTip(MetaDataFormat,  "MetaData Conversion format (b, w, i, f, number as multiplier)")
-
+##------------------------------------------------------------------------------
+## Horizontal (top) bar + Conversion button & formats
+#HBBar = tk.Frame(height=2, bd=1, relief=tk.SUNKEN)
+#HBBar.grid(row=0, column=0, columnspan=10, sticky=(tk.N, tk.E, tk.S, tk.W))
+#
+#BtnCData      = tk.Button(HBBar, text='C-Data') #,  command=ClickCData)
+#BtnCData.pack(side=tk.LEFT)
+#createToolTip(BtnCData,"Convert data of message in top window, result in lower window")
+#
+#tk.Label(HBBar, text="Load:").pack(side=tk.LEFT)
+#
+#MetaDataFormat = tk.Entry(HBBar, width=6)
+#MetaDataFormat.pack(side=tk.LEFT)
+#MetaDataFormat.insert(0, "-")
+#createToolTip(MetaDataFormat,  "MetaData Conversion format (b, w, i, f, number as multiplier)")
+#
 #------------------------------------------------------------------------------
 # Vertical (right hand) bar + buttons
 VBBar = tk.Frame(height=2, bd=1, relief=tk.SUNKEN)
@@ -334,9 +354,9 @@ Pd3.pack(side=tk.TOP)
 Pd3Value.pack(side=tk.TOP)
 
 # change fuction for each PulDownList
-def ChangePd1(x) : Pd1TkStr.set(x) ; Pd1Value['text'] = ""
-def ChangePd2(x) : Pd2TkStr.set(x) ; Pd2Value['text'] = ""
-def ChangePd3(x) : Pd3TkStr.set(x) ; Pd3Value['text'] = ""
+def ChangePd1(x) : Pd1TkStr.set(x) ; Pd1Value['text'] = "" ; SetTraceVars()
+def ChangePd2(x) : Pd2TkStr.set(x) ; Pd2Value['text'] = "" ; SetTraceVars()
+def ChangePd3(x) : Pd3TkStr.set(x) ; Pd3Value['text'] = "" ; SetTraceVars()
 
 # PullDown lists are filled by ReadListFile
 
