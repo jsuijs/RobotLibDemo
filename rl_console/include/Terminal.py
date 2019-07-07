@@ -55,8 +55,17 @@ def LogEndRightClick(event):
 def LogEndWorker(Filename):
    if LogStart.Flag:
       # we're logging => logend
-      # save
       LogStart.File.close()
+
+      if ConfigData['Terminal']['LogFile'] != Filename :
+         # we have been logging with the default filename, so need to
+         # rename/move this file to the selected filename.
+         print("Rename ", ConfigData['Terminal']['LogFile'], "to", Filename)
+         try:
+             os.remove(Filename)
+         except OSError:
+             pass
+         os.rename(ConfigData['Terminal']['LogFile'], Filename)
 
       # Change to non-logging state
       LogStart.Flag = False
@@ -73,6 +82,7 @@ def LogEndWorker(Filename):
    # launch file
    import platform
    if platform.system() == 'Windows' :
+      print("File to open: ", Filename)
       os.startfile(Filename)
    else :
       import subprocess
