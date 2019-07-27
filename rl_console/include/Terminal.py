@@ -306,7 +306,7 @@ def on_message(client, userdata, message):
                FrameFilterState = 1
 #               print("0.1 ", i)
             except :
-               FilteredPayload =  InPayLoad
+               FilteredPayload += InPayLoad
                InPayLoad = ""
 #               print("0.2 ")
                continue
