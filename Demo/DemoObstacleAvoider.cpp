@@ -35,7 +35,9 @@
 
 #define DEMO_NAME DemoObstacleAvoider
 
+// note: need to find a better way to access required sensors for setup....
 extern TVL53L0x VL53L0xL, VL53L0xM, VL53L0xR;
+extern int VlArrayLL, VlArrayLM, VlArrayLF, VlArrayRF, VlArrayRM, VlArrayRR;
 
 //-------------
 // OVERVIEW
@@ -64,9 +66,9 @@ void DefaultDemoSetup()
    printf("DemoSetup for ObstacleAvoider.\n");
 
    // Link 3 sensors to class.
-   ObstacleAvoider.SensorL.SensorInput.SetSrc(VL53L0xL.Distance);    // left (~ 45 degrees)
-   ObstacleAvoider.SensorM.SensorInput.SetSrc(VL53L0xM.Distance);    // forward
-   ObstacleAvoider.SensorR.SensorInput.SetSrc(VL53L0xR.Distance);    // right (~ -45 degrees)
+   ObstacleAvoider.Sensor[0].Input.SetSrc(VlArrayLM);    // left (~ 45 degrees)
+   ObstacleAvoider.Sensor[1].Input.SetSrc(VlArrayLF);    // forward
+   ObstacleAvoider.Sensor[2].Input.SetSrc(VlArrayRM);    // right (~ -45 degrees)
 }
 
 //-----------------------------------------------------------------------------
