@@ -193,40 +193,50 @@ def DataTakt():
       if fields[0] == "BASIC_TRC" :
          print("msg:", len(fields), fields)
 
-         #----------------------------
-         # field 1 = status flags
-         # field 2 = address
-         # field 3 = basic load
-         # next: addr/data field pairs
-         #----------------------------
+         try :
 
-         ShowSourceLocation(int(fields[2]))
 
-         # Only show one of the status strings
-         if int(fields[1]) & 1 : String = "Run"
-         if int(fields[1]) & 2 : String = "Sleep"
-         if int(fields[1]) & 4 : String = "Done"
-         String = "Status: " + String + " (Load: " + fields[3] + "%)"
-         StatusMsg(String)
+            #----------------------------
+            # field 1 = status flags
+            # field 2 = address
+            # field 3 = basic load
+            # next: addr/data field pairs
+            #----------------------------
 
-         fields = fields[4:]  # remove fixed part
+            ShowSourceLocation(int(fields[2]))
 
-         # remove old values
-         Pd1Value['text'] = ""
-         Pd2Value['text'] = ""
-         Pd3Value['text'] = ""
+            # Only show one of the status strings
+            if int(fields[1]) & 1 : String = "Run"
+            if int(fields[1]) & 2 : String = "Sleep"
+            if int(fields[1]) & 4 : String = "Done"
+            String = "Status: " + String + " (Load: " + fields[3] + "%)"
+            StatusMsg(String)
 
-         while len(fields) > 1 : # loop through address/value pairs
-            print("Addr:", fields[0], "Data:", fields[1]);
-            if Pd1TkStr.get() in VarList :
-               if VarList[Pd1TkStr.get()] == int(fields[0]) : Pd1Value['text'] = fields[1]
-            if Pd2TkStr.get() in VarList :
-               if VarList[Pd2TkStr.get()] == int(fields[0]) : Pd2Value['text'] = fields[1]
-            if Pd3TkStr.get() in VarList :
-               if VarList[Pd3TkStr.get()] == int(fields[0]) : Pd3Value['text'] = fields[1]
+            fields = fields[4:]  # remove fixed part
 
-            fields = fields[2:] # setup for next pair
-         continue
+            # remove old values
+            Pd1Value['text'] = ""
+            Pd2Value['text'] = ""
+            Pd3Value['text'] = ""
+
+            while len(fields) > 1 : # loop through address/value pairs
+               print("Addr:", fields[0], "Data:", fields[1]);
+               if Pd1TkStr.get() in VarList :
+                  if VarList[Pd1TkStr.get()] == int(fields[0]) : Pd1Value['text'] = fields[1]
+               if Pd2TkStr.get() in VarList :
+                  if VarList[Pd2TkStr.get()] == int(fields[0]) : Pd2Value['text'] = fields[1]
+               if Pd3TkStr.get() in VarList :
+                  if VarList[Pd3TkStr.get()] == int(fields[0]) : Pd3Value['text'] = fields[1]
+
+               fields = fields[2:] # setup for next pair
+            continue
+         except:
+            # try/except prevents the monitor to block on a corrupted message...
+            message = "== An exception of type {0} occurred. ==".format(type(ex).__name__)
+            print(message)
+            import traceback
+            print(traceback.format_exc())
+
 
    # reload file on change
    global FileTime
