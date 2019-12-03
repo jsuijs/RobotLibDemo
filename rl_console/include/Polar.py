@@ -115,10 +115,12 @@ mqttc = rl.MQttClient(ConfigData['MqttIp'])
 #-----
 BlobMsg = blob.BlobMsg()
 
+DotColor = 'blue'
+
 def DataTakt():
    #print("DataTakt")
+   global PauseFlag, ScreenUpdate, BlobString, DotColor
 
-   global PauseFlag, ScreenUpdate, BlobString
    if PauseFlag != 1 :
       # process messages
       while len(mqttc.MsgQueue) > 0 :
@@ -133,23 +135,31 @@ def DataTakt():
             print("msg:", len(fields), fields)
 
             fields.pop(0)
-            try :
-               while len(fields) > 1 :
-                  field1 = int(fields.pop(0))
-                  field2 = int(fields.pop(0))
 
-                  plt.plot(field1 / 57.2958, field2,  'o', color='blue')   # variant op plot
-                  print(field1 / 57.2958, field2, 10, 2)   # variant op plot
+            if fields[0] == "CLEAR" :
+               ClickClear()
 
-               ScreenUpdate = 1
+            if fields[0] == "COLOR" :
+               DotColor = fields[1]
 
-            except Exception as ex:
-               # try/except prevents the monitor to block on a corrupted message...
-               message = "== An exception of type {0} occurred. ==".format(type(ex).__name__)
-               print(message)
-               import traceback
-               print(traceback.format_exc())
+            if fields[0] == "VPAIRS" :
+               fields.pop(0)
+               try :
+                  while len(fields) > 1 :
+                     field1 = int(fields.pop(0))
+                     field2 = int(fields.pop(0))
 
+                     plt.plot(field1 / 57.2958, field2,  'o', color=DotColor)   # variant op plot
+                     #print(field1 / 57.2958, field2, 10, 2)   # variant op plot
+
+                  ScreenUpdate = 1
+
+               except Exception as ex:
+                  # try/except prevents the monitor to block on a corrupted message...
+                  message = "== An exception of type {0} occurred. ==".format(type(ex).__name__)
+                  print(message)
+                  import traceback
+                  print(traceback.format_exc())
 
    if ScreenUpdate == 1 :
       ScreenUpdate = 0
