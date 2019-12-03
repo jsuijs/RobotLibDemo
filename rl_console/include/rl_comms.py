@@ -47,6 +47,9 @@ import sys
 class MQttClient():
    def __init__(self, MqttIp, Topic = "Robotlib/ComRawRx"):
 
+      import sys
+      print(sys.version)
+
       #create an mqtt client
       mypid = os.getpid()
       client_uniq = "pc_pub_"+str(mypid)

@@ -230,7 +230,7 @@ def DataTakt():
 
                fields = fields[2:] # setup for next pair
             continue
-         except:
+         except Exception as ex:
             # try/except prevents the monitor to block on a corrupted message...
             message = "== An exception of type {0} occurred. ==".format(type(ex).__name__)
             print(message)

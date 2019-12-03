@@ -133,13 +133,23 @@ def DataTakt():
             print("msg:", len(fields), fields)
 
             fields.pop(0)
-            while len(fields) > 1 :
-               field1 = fields.pop(0)
-               field2 = fields.pop(0)
-               plt.plot(int(field1) / 57.2958, int(field2),  'o', color='blue')   # variant op plot
-               print(int(field1) / 57.2958, int(field2), 10, 2)   # variant op plot
+            try :
+               while len(fields) > 1 :
+                  field1 = int(fields.pop(0))
+                  field2 = int(fields.pop(0))
 
-            ScreenUpdate = 1
+                  plt.plot(field1 / 57.2958, field2,  'o', color='blue')   # variant op plot
+                  print(field1 / 57.2958, field2, 10, 2)   # variant op plot
+
+               ScreenUpdate = 1
+
+            except Exception as ex:
+               # try/except prevents the monitor to block on a corrupted message...
+               message = "== An exception of type {0} occurred. ==".format(type(ex).__name__)
+               print(message)
+               import traceback
+               print(traceback.format_exc())
+
 
    if ScreenUpdate == 1 :
       ScreenUpdate = 0
