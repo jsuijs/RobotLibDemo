@@ -58,14 +58,17 @@ void DefaultDemoSetup()
 {
    printf("DemoSetup for Lpp (LidarPreProcessor).\n");
 
-   MainTasks.Add(FP_FNAME(Lpp)); // add to taks-list
+   if (Lpp.begin()) {
+      // init success
+      MainTasks.Add(FP_FNAME(Lpp)); // add to taks-list
 
 
-   Lpp.SetAngleOffset(180);      // Align lidar with robotlib coordinate system
-   Lpp.SetReverse(1);
+      Lpp.SetOffsetDegrees(180);      // Align lidar with robotlib coordinate system
+      Lpp.SetReverse(1);
 
-   Lpp.ArraySetup(-90, 20, 9);   // Setup array with 9 segments of 20 degrees
-   Lpp.SensorSetup(0, -60, 120);  // Setup Sensor 0 to detect forward objects
+      Lpp.ArraySetup(-90, 20, 9);   // Setup array with 9 segments of 20 degrees
+      Lpp.SensorSetup(0, -60, 120);  // Setup Sensor 0 to detect forward objects
+   }
 }
 
 //-----------------------------------------------------------------------------
@@ -76,7 +79,14 @@ void CliCmd_DefaultDemo(int NrParams, TCiParams *P)
 {
    printf("Demo command for Lpp.\n");
 
-   UmRotate(Position.Degrees + Lpp.Sensor[0].Angle/32, 1, 100);
+   if (Lpp.IsRunning() == false) {
+      printf("Start lidar rotation\n");
+      Lpp.Start();
+      return;
+   }
+
+   UmRotate(Position.Degrees + Lpp.Sensor[0].Degrees32/32, 1, 100);
+   Lpp.Stop(); // stop rotation
 }
 
 //-------------
