@@ -1,7 +1,7 @@
 //-----------------------------------------------------------------------------
 // DemoLpp.cpp
 //
-// Copyright (c) 2013-2019 Joep Suijs - All rights reserved.
+// Copyright (c) 2013-2020 Joep Suijs - All rights reserved.
 //
 // This demo shows how to use Lpp.
 //
@@ -60,14 +60,13 @@ void DefaultDemoSetup()
 
    if (Lpp.begin()) {
       // init success
-      MainTasks.Add(FP_FNAME(Lpp)); // add to taks-list
-
-
       Lpp.SetOffsetDegrees(180);      // Align lidar with robotlib coordinate system
       Lpp.SetReverse(1);
 
       Lpp.ArraySetup(-90, 20, 9);   // Setup array with 9 segments of 20 degrees
       Lpp.SensorSetup(0, -60, 120);  // Setup Sensor 0 to detect forward objects
+
+      MainTasks.Add(FP_FNAME(Lpp)); // add to taks-list
    }
 }
 

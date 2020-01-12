@@ -4,6 +4,14 @@ Polar plot of MQTT data
 ==========================
 """
 
+#
+# ZOOM werkt anders in POLAR plot!
+# https://matplotlib.org/users/navigation_toolbar.html
+# * Klik op PAN/ZOOM (icon met 4 pijlen)
+# * rechtsklik op een punt op de y-schaal
+# * schuif punt naar binnen of buiten met rechter knop ingedrukt
+#
+
 import rl_comms as rl      # RobotLib common code
 from   rl_gui  import *    # RobotLib common code
 import blob_msg as blob
