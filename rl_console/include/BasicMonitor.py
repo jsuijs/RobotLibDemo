@@ -7,6 +7,7 @@ import rl_comms as rl      # RobotLib common code
 from   rl_gui  import *    # RobotLib common code
 import blob_msg as blob
 import file_export as FileExport
+import tkinter as tk
 import tkinter.scrolledtext as tkst
 
 import os, time, sys
@@ -118,7 +119,9 @@ def ReadListFile(FileName) :
          print(i, MemoryRecords[i])
 
    # force display of new source data
-   ShowSourceLocation(0)
+   ShowSourceLocation(MemoSrc, LabelSrc, 0)
+
+   ShowSourceLocation(MemoCall1, LabelCall1, 16) # for test
 
    OptionList = ["-", *sorted(VarList.keys())]
    print("Set optionlist to", OptionList)
@@ -127,24 +130,32 @@ def ReadListFile(FileName) :
    SetOptionList(Pd3, Pd3TkStr, ChangePd3, OptionList)
 
 #------------------------------------------------------------------------------
-def ShowSourceLocation(MemAddr) :
+def ShowSourceLocation(TargetMemo, TargetLabel, MemAddr) :
 
    print("ShowSourceLocation", MemAddr)
+
+   if (MemAddr < 0) :
+      # clear window & return
+      TargetMemo.delete('1.0', tk.END)
+      TargetLabel['text'] = '--'
+      return
 
    Result = 0
    for A in Addresses :
       if A > MemAddr : break
       Result = A
 
-   #print(Result, MemoryRecords[Result])
+   print(Result, "<", MemoryRecords[Result], ">")
    Fields = MemoryRecords[Result].split(':')
    #print(Fields[0], format(int(Result), '04x'), Fields[1])
-
-   Src = Fields[0]               # list of source lines
+   print(Fields[1])
+   Src = Fields[0]               # list (name) of source lines
    LineNr = int(Fields[1])-1     # 0-based index of line to highlight
 
+   TargetLabel['text'] = "File:" + Src + ", line: " + Fields[1]
+
    # select lines to show
-   WinHeight = Memo.cget('height') - 1
+   WinHeight = TargetMemo.cget('height') # 20200116: was -1
    Start = LineNr - int(WinHeight / 2)
    if Start < 0 : Start = 0
    End = Start + WinHeight
@@ -153,16 +164,16 @@ def ShowSourceLocation(MemAddr) :
       Start = End - WinHeight
       if Start < 0 : Start = 0
 
-   Memo.delete('1.0', tk.END)
+   TargetMemo.delete('1.0', tk.END)
    while Start < End :
       if Start >= len(Sources[Src]) :
          Line = "<eof>"
       else :
          Line = Sources[Src][Start]
       if Start == LineNr :
-         Memo.insert(tk.END, Line, "highlight")
+         TargetMemo.insert(tk.END, Line, "highlight")
       else :
-         Memo.insert(tk.END, Line)
+         TargetMemo.insert(tk.END, Line)
       Start += 1
 
 #------------------------------------------------------------------------------
@@ -199,20 +210,24 @@ def DataTakt():
             #----------------------------
             # field 1 = status flags
             # field 2 = address
-            # field 3 = basic load
+            # field 3 = Top-1 of return stack
+            # field 4 = Top of return stack
+            # field 5 = basic load
             # next: addr/data field pairs
             #----------------------------
 
-            ShowSourceLocation(int(fields[2]))
+            ShowSourceLocation(MemoSrc,   LabelSrc,   int(fields[2]))
+            ShowSourceLocation(MemoCall1, LabelCall1, int(fields[3]))
+            ShowSourceLocation(MemoCall2, LabelCall2, int(fields[4]))
 
             # Only show one of the status strings
             if int(fields[1]) & 1 : String = "Run"
             if int(fields[1]) & 2 : String = "Sleep"
             if int(fields[1]) & 4 : String = "Done"
-            String = "Status: " + String + " (Load: " + fields[3] + "%)"
+            String = "Status: " + String + " (Load: " + fields[5] + "%)"
             StatusMsg(String)
 
-            fields = fields[4:]  # remove fixed part
+            fields = fields[6:]  # remove fixed part
 
             # remove old values
             Pd1Value['text'] = ""
@@ -309,7 +324,7 @@ root.wm_title(os.path.basename(__file__) + ' - ' + ListFileName)
 
 # resize stuff
 root.columnconfigure(7, weight = 3 )
-root.rowconfigure(3, weight = 3 )
+root.rowconfigure(8, weight = 3 )
 
 ConfigData = rl.LoadCfg(CfgFileName)
 
@@ -337,7 +352,7 @@ mqttc = rl.MQttClient(ConfigData['MqttIp']) # setup & connect MQtt client to rec
 #------------------------------------------------------------------------------
 # Vertical (right hand) bar + buttons
 VBBar = tk.Frame(height=2, bd=1, relief=tk.SUNKEN)
-VBBar.grid(row=1, column=9, rowspan=3, sticky=(tk.N, tk.E, tk.S, tk.W))
+VBBar.grid(row=1, column=9, rowspan=99, sticky=(tk.N, tk.E, tk.S, tk.W))
 
 B = tk.Label(VBBar, text="VARS")
 B.pack(side=tk.TOP)
@@ -370,19 +385,35 @@ def ChangePd3(x) : Pd3TkStr.set(x) ; Pd3Value['text'] = "" ; SetTraceVars()
 
 # PullDown lists are filled by ReadListFile
 
-#------------------------------------------------------------------------------
-# Paned (resizable) window with 2 memo fields
-Paned = tk.PanedWindow(orient=tk.VERTICAL)
-Paned.grid(row=3, column=0, columnspan=8, sticky=(tk.N, tk.E, tk.S, tk.W))
+# Text support 2-line windows (ScrolledText minimum is 3)
+#--
+LabelCall1 = tk.Label(root, text="--", anchor='w')
+LabelCall1.grid(row=3, column=0, columnspan=8, sticky=(tk.N, tk.E, tk.S, tk.W))
 
-Memo = tkst.ScrolledText(root, height=40, width=80, wrap="none", bg="#f8d4ce")
-Memo.grid(row=3, column=0, columnspan=8, sticky=(tk.N, tk.E, tk.S, tk.W))
-Memo.tag_config("highlight", background="dodger blue", foreground="white")
+MemoCall1 = tkst.Text(root, height=2, width=80, wrap="none", bg="LightBlue3")
+MemoCall1.grid(row=4, column=0, columnspan=8, sticky=(tk.N, tk.E, tk.S, tk.W))
+MemoCall1.tag_config("highlight", background="dodger blue", foreground="white")
+
+#--
+LabelCall2 = tk.Label(root, text="--", anchor='w')
+LabelCall2.grid(row=5, column=0, columnspan=8, sticky=(tk.N, tk.E, tk.S, tk.W))
+
+MemoCall2 = tkst.Text(root, height=2, width=80, wrap="none", bg="LightBlue3")
+MemoCall2.grid(row=6, column=0, columnspan=8, sticky=(tk.N, tk.E, tk.S, tk.W))
+MemoCall2.tag_config("highlight", background="dodger blue", foreground="white")
+
+#--
+LabelSrc = tk.Label(root, text="--", anchor='w')
+LabelSrc.grid(row=7, column=0, columnspan=8, sticky=(tk.N, tk.E, tk.S, tk.W))
+
+MemoSrc = tkst.ScrolledText(root, height=40, width=80, wrap="none", bg="#f8d4ce")
+MemoSrc.grid(row=8, column=0, columnspan=8, sticky=(tk.N, tk.E, tk.S, tk.W))
+MemoSrc.tag_config("highlight", background="dodger blue", foreground="white")
 
 #------------------------------------------------------------------------------
 # bottom line
 LabelStatus  = tk.Label(root, text="Startup ready.")
-LabelStatus.grid(row=4, column=0,  columnspan=8, sticky=(tk.W))
+LabelStatus.grid(row=9, column=0,  columnspan=8, sticky=(tk.W))
 
 # -----------------------------------------------------------------------------
 # first time load here, without try so program fails if input does not exist.
