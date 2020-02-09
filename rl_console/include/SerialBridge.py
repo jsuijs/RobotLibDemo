@@ -34,8 +34,8 @@ class SerialBridge:
 
       # Open serial port
       try:
-         print("Connecting... ", self.ConfigData['Bridge']['SerialPort'])
-         self.ser = serial.Serial(self.ConfigData['Bridge']['SerialPort'], 115200, timeout=0, write_timeout=0)
+         print("Connect to ", self.ConfigData['Bridge']['SerialPort'], "@", self.ConfigData['Bridge']['SerialSpeed'], "bps")
+         self.ser = serial.Serial(self.ConfigData['Bridge']['SerialPort'], self.ConfigData['Bridge']['SerialSpeed'], timeout=0, write_timeout=0)
          self.ser.flushInput()
 
       except:
