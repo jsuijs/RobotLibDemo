@@ -13,7 +13,7 @@ import json
 
 OutputLines    = []
 
-def Send():
+def SendCmd():
    try:
       s = T.selection_get()
    except tk.TclError:
@@ -25,18 +25,18 @@ def Send():
       print("add cr\n")
       s += "\n"
 
-   print("Send: [%s]\n" % (s))
+   print("SendCmd: [%s]\n" % (s))
    global OutputLines
    OutputLines += s.splitlines(1)   # 1 = keep line separators
 
-def SaveCmdData():
+def SaveCmd():
    global CmdData
    print("Save")
    CmdData['CommandText'] = T.get("1.0", tk.END)
    with open('WinCommands.json', 'w') as fp:
       json.dump(CmdData, fp, sort_keys=True, indent=4)
 
-def LoadCmdData():
+def LoadCmd():
    global CmdData
    print("Load")
    with open('WinCommands.json', 'r') as fp:
@@ -48,6 +48,9 @@ def LoadCmdData():
    T.delete('1.0', tk.END)
    T.insert(1.0, s)
 
+def ClearCmd():
+   T.delete('1.0', tk.END)
+
 def SendOutputLines():
    global OutputLines
    master.after(100, SendOutputLines)
@@ -57,7 +60,7 @@ def SendOutputLines():
       print (":".join("{:02x}".format(ord(c)) for c in s))
 
 def CtrlEnterKey(event):
-   Send()
+   SendCmd()
    return "break"    # no more event handling, so TEXT widget does not processes ctrl-enter.
 
 #------------------------------------------------------------------------------
@@ -75,27 +78,30 @@ ConfigData = rl.LoadCfg()
 
 # load program-specific configuration file
 try:
-   LoadCmdData()
+   LoadCmd()
 
 except:
    # no config => load defaults and & save (template) config file
    CmdData = {  'CommandText' : "\n"}
-   SaveCmdData()
+   SaveCmd()
 
-BntSend  = tk.Button(master, text='Send', command=Send)
-BntLoad  = tk.Button(master, text='Load', command=LoadCmdData)
-BntSave  = tk.Button(master, text='Save', command=SaveCmdData)
+BntSend   = tk.Button(master, text='Send',  command=SendCmd)
+BntLoad   = tk.Button(master, text='Load',  command=LoadCmd)
+BntSave   = tk.Button(master, text='Save',  command=SaveCmd)
+BntClear  = tk.Button(master, text='Clear', command=ClearCmd)
 
-BntSend.grid(row=0, column=0, sticky=tk.W, pady=4)
-BntLoad.grid(row=0, column=1, sticky=tk.W, pady=4)
-BntSave.grid(row=0, column=2, sticky=tk.W, pady=4)
+BntSend.grid( row=0, column=0, sticky=tk.W, pady=4)
+BntLoad.grid( row=0, column=1, sticky=tk.W, pady=4)
+BntSave.grid( row=0, column=2, sticky=tk.W, pady=4)
+BntClear.grid(row=0, column=3, sticky=tk.W, pady=4)
 
-createToolTip(BntSend, "Ctrl-Enter - send selected commands to target")
-createToolTip(BntLoad, "Load commands & config")
-createToolTip(BntSave, "Save commands & config")
+createToolTip(BntSend,  "Ctrl-Enter - send selected commands to target")
+createToolTip(BntLoad,  "Load commands & config")
+createToolTip(BntSave,  "Save commands & config")
+createToolTip(BntClear, "Clear commands")
 
 # resize stuff
-master.columnconfigure(2, weight = 3 )
+master.columnconfigure(3, weight = 3 )
 master.rowconfigure(1, weight = 3 )
 
 #create an mqtt client & connect
