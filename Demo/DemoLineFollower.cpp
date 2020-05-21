@@ -71,7 +71,14 @@ void DefaultDemoSetup()
    }
    MainTasks.Add(FP_FNAME(LineSensor));
    LineSensor.On();
-   LineSensor.Reverse = false;
+
+   if (LineSensor.NeedDefaults()) {
+      printf("LineSensor: no config=> set defaults\n");
+      LineSensor.SetCalibration(220,580);  // put your own calibration values here
+      LineSensor.LightDarkSwap = false;
+      LineSensor.Reverse = false;
+   }
+
    // LineSensor setup done.
 
 
