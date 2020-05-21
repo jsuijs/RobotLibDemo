@@ -77,7 +77,7 @@ void DefaultDemoSetup()
    CmdStringRepository.AddPf(5, "arc90", "um arc 90 300 100 0 0");
 
    // 3: add a command and link it to an unused RC key by using it's RC5 code:
-   CmdStringRepository.Add(4537, "arc60", "um arc 60 300 100 0 0");
+   CmdStringRepository.AddRc(4537, "arc60", "um arc 60 300 100 0 0");
 
    // Framework already registered the Repository function
    // key handler.
