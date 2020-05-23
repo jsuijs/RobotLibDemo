@@ -1,7 +1,7 @@
 //-----------------------------------------------------------------------------
 // DemoLineSensorQTR8A.cpp
 //
-// Copyright (c) 2013-2019 Joep Suijs - All rights reserved.
+// Copyright (c) 2013-2020 Joep Suijs - All rights reserved.
 //
 // This demo shows how to use the LineSensor.
 //
@@ -65,9 +65,6 @@ void DefaultDemoSetup()
 {
    printf("DemoSetup for LineSensor.\n");
 
-   // register linesensor commans to command-line
-   CliAddCommands(CliLineSensor, "LineSensor");
-
    //-----------------------------------------------
    // Configure ADC inputs for linesensor
    //-----------------------------------------------
@@ -87,14 +84,14 @@ void DefaultDemoSetup()
    //-----------------------------------------------
    // -> link to 8 source integers
    //-----------------------------------------------
-   LineSensor.AdcIn[0].SetSrc(Ads1015_0, 0);
-   LineSensor.AdcIn[1].SetSrc(Ads1015_0, 1);
-   LineSensor.AdcIn[2].SetSrc(Ads1015_0, 2);
-   LineSensor.AdcIn[3].SetSrc(Ads1015_0, 3);
-   LineSensor.AdcIn[4].SetSrc(Ads1015_1, 0);
-   LineSensor.AdcIn[5].SetSrc(Ads1015_1, 1);
-   LineSensor.AdcIn[6].SetSrc(Ads1015_1, 2);
-   LineSensor.AdcIn[7].SetSrc(Ads1015_1, 3);
+   LineSensor.Input[0].SetSrc(Ads1015_0, 0);
+   LineSensor.Input[1].SetSrc(Ads1015_0, 1);
+   LineSensor.Input[2].SetSrc(Ads1015_0, 2);
+   LineSensor.Input[3].SetSrc(Ads1015_0, 3);
+   LineSensor.Input[4].SetSrc(Ads1015_1, 0);
+   LineSensor.Input[5].SetSrc(Ads1015_1, 1);
+   LineSensor.Input[6].SetSrc(Ads1015_1, 2);
+   LineSensor.Input[7].SetSrc(Ads1015_1, 3);
 #endif
 
    // Add linesensor to task list, to have it called in the main loop.
@@ -111,14 +108,15 @@ void DefaultDemoSetup()
    // if load fails, set defaults
    if (LineSensor.NeedDefaults()) {
       LineSensor.SetCalibration(220,580);  // put your own calibration values here
-      // Reverse depends on sensor and background.
-      // For QTR8A, default (Reverse == false) means dark line on light background.
-      LineSensor.Reverse = false;
+      // LightDark depends on sensor and background.
+      // LeftRightSwap depend on input configuration, sensor orientation etc.
+      // Use 'ls calmsm' for automatic calibration
+      LineSensor.LightDarkSwap = false;
+      LineSensor.LeftRightSwap = false;
    }
 
    // Sensor on (not off, not calibration)
    LineSensor.On();
-
 }
 
 //-----------------------------------------------------------------------------

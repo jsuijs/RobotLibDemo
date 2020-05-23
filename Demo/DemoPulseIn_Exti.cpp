@@ -64,9 +64,6 @@ void DefaultDemoSetup()
 {
    printf("DemoSetup for PulseIn & Exti.\n");
 
-   // Init Exti (external interrupts) in general
-   HalExtiInit();
-
    //--------------------------------------------------------------------------
    // Setup pin D1 for EXTI.
    // * GPIO Pin is set to input
@@ -79,6 +76,7 @@ void DefaultDemoSetup()
    //
    // Note: it seems EXTI_Line1 must be equal to GPIO_Pin_1 for this to work.
    //
+   //--------------------------------------------------------------------------
    HalExtiInitPin(GPIOD, GPIO_Pin_1, EXTI_PortSourceGPIOD, EXTI_PinSource1, EXTI_Line1 ,EXTI_Trigger_Rising_Falling);
 
 

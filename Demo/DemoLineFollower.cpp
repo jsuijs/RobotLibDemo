@@ -1,7 +1,7 @@
 //-----------------------------------------------------------------------------
 // DemoLineFollower.cpp
 //
-// Copyright (c) 2013-2018 Joep Suijs - All rights reserved.
+// Copyright (c) 2013-2020 Joep Suijs - All rights reserved.
 //
 // This demo shows how to use LineFollower.
 //
@@ -20,7 +20,7 @@
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
-// along with RobotLib.  If not, see <http://www.gnu.org/licenses/>.
+// along with RobotLib. If not, see <http://www.gnu.org/licenses/>.
 //
 // See http://wiki.robotmc.be/index.php?title=RobotLib for more information.
 //-----------------------------------------------------------------------------
@@ -53,6 +53,12 @@
 // the Qrt8A is used.
 TLineSensorQtr8a LineSensor;
 
+#ifndef ADC_MAX127
+// Not MAX127 => ADS1015
+TADS1015 Ads1015_0(ADS_SDA_I2C_ADDRESS);
+TADS1015 Ads1015_1(ADS_GND_I2C_ADDRESS);
+#endif
+
 //-----------------------------------------------------------------------------
 // DefaultDemoSetup -
 //-----------------------------------------------------------------------------
@@ -61,26 +67,43 @@ void DefaultDemoSetup()
 {
    printf("DemoSetup for LineFollower.\n");
 
-
-   // Setup the linesensor, required to demonstrate the
-   // use of the LineFollower. See the linesensor demo
-   // for details on the setup
-   CliAddCommands(CliLineSensor, "LineSensor");
+   //----------------------------------------------------------------
+   // Setup the linesensor - see DemoLineSensorQTR8A.cpp for details
+   // Linesensor is required to demonstrate
+   // use of the LineFollower.
+#ifdef ADC_MAX127
+   //-----------------------------------------------
+   // SETUP FOR MAX127
+   //-----------------------------------------------
+   // -> one AdcReadFunction for all sensors
+   // -> A different AdcChannel nr for each sensor
    for (int i=0; i<8; i++) {
       LineSensor.AdcIn[i].SetSrc(Max127Read, i);
    }
+#else
+   //-----------------------------------------------
+   // SETUP FOR ADS1015
+   //-----------------------------------------------
+   // -> link to 8 source integers
+   //-----------------------------------------------
+   LineSensor.Input[0].SetSrc(Ads1015_0, 0);
+   LineSensor.Input[1].SetSrc(Ads1015_0, 1);
+   LineSensor.Input[2].SetSrc(Ads1015_0, 2);
+   LineSensor.Input[3].SetSrc(Ads1015_0, 3);
+   LineSensor.Input[4].SetSrc(Ads1015_1, 0);
+   LineSensor.Input[5].SetSrc(Ads1015_1, 1);
+   LineSensor.Input[6].SetSrc(Ads1015_1, 2);
+   LineSensor.Input[7].SetSrc(Ads1015_1, 3);
+#endif
    MainTasks.Add(FP_FNAME(LineSensor));
-   LineSensor.On();
-
    if (LineSensor.NeedDefaults()) {
-      printf("LineSensor: no config=> set defaults\n");
-      LineSensor.SetCalibration(220,580);  // put your own calibration values here
+      LineSensor.SetCalibration(220,580);
       LineSensor.LightDarkSwap = false;
-      LineSensor.Reverse = false;
+      LineSensor.LeftRightSwap = false;
    }
-
-   // LineSensor setup done.
-
+   LineSensor.On();
+   // LineSensor setup done - see DemoLineSensorQTR8A.cpp for details
+   //----------------------------------------------------------------
 
    // ----------------------
    // Setup the LineFollower
@@ -88,14 +111,14 @@ void DefaultDemoSetup()
 
    // Set the source of the LineFollower and the value
    // when the line is at the center of the sensor
-   LineFollower.SensorInput.SetSrc(LineSensor, SC_LS_VALUE_INTERPOLLED);
+   LineFollower.SensorInput.SetSrc(LineSensor);
    LineFollower.SensorOffset = 0;
    LineSensor.SetCalibration(220,580);  // put your own calibration values here
 
    // Set the speed used to follow the line and the
    // settings of the P-controller
    LineFollower.SpeedSetpoint = 200;
-   LineFollower.PID.SetTunings(0.01,0,0);  // Kp, Ki & Kp
+   LineFollower.PID.SetTunings(0.2,0,0);  // Kp, Ki & Kp
 
    // There is a grace periode when the line is lost.
    // During this period, the robot drives straight,
