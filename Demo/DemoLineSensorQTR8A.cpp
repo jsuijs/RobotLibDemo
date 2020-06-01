@@ -134,11 +134,11 @@ void CliCmd_DefaultDemo(int NrParams, TCiParams *P)
    printf("position of line center : %d\n",     LineSensor.LineValue );
 
    // Note: ScRead returns true on succes.
-   if (LineSensor.ScRead(Value, SC_LS_VALUE_LEFT))          printf("position of left edge   : %d\n", Value);
-   if (LineSensor.ScRead(Value, SC_LS_VALUE_RIGHT))         printf("position of right edge  : %d\n", Value);
-   if (LineSensor.ScRead(Value, SC_LS_LINEBITS))            printf("one bit for each sensor : 0x%x\n", Value);
-   if (LineSensor.ScRead(Value, SC_ARRAY0+3))               printf("raw sensor 3            : %d\n", Value);
-   if (LineSensor.ScRead(Value, SC_ARRAY1+3))               printf("Normalised sensor 3     : %d\n", Value);   // calibrated value
+   if (LineSensor.ScRead(SC_LS_LINE_LEFT, Value))     printf("position of left line   : %d\n", Value);
+   if (LineSensor.ScRead(SC_LS_LINE_RIGHT, Value))    printf("position of right line  : %d\n", Value);
+   if (LineSensor.ScRead(SC_LS_LINEBITS, Value))      printf("one bit for each sensor : 0x%x\n", Value);
+   if (LineSensor.ScRead(SC_ARRAY0+3, Value))         printf("raw sensor 3            : %d\n", Value);
+   if (LineSensor.ScRead(SC_ARRAY1+3, Value))         printf("Normalised sensor 3     : %d\n", Value);   // calibrated value
 
    // This would clear all readings and calibration data:
    //LineSensor.Clear();
