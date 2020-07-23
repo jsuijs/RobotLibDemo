@@ -66,7 +66,7 @@ def ClickSend() :
    for msg in MessageBuffer:
       msg = '\xc1' + msg + '\xc0'   # add framing (but not yet escaping for binary files...)
       print(msg)
-      mqttc.mqttc.publish("Robotlib/ComRawTx", msg.encode("cp1252"))
+      Rcc.Publish("Robotlib/ComRawTx", msg.encode("cp1252"))
       time.sleep(0.15)  # Delays in seconds.
 
 #------------------------------------------------------------------------------
@@ -161,8 +161,8 @@ def DataTakt():
    #print("DataTakt")
 
    # process messages
-   while len(mqttc.MsgQueue) > 0 :
-      Message = mqttc.MsgQueue.pop(0)
+   while len(Rcc.MsgQueue) > 0 :
+      Message = Rcc.MsgQueue.pop(0)
       fields = Message.split()             # whitespace separated
       if fields[0] == "STAMP" :
          print("msg:", len(fields), fields)
@@ -171,7 +171,7 @@ def DataTakt():
             # clockset  dd mm yyyy hh mm ss - set clock date & time
             Data = datetime.datetime.now().strftime("clockset %d %m %Y %H %M %S\r")
             MemoAdd("Send time: " + Data)
-            mqttc.mqttc.publish("Robotlib/ComRawTx", Data)
+            Rcc.Publish("Robotlib/ComRawTx", Data)
          continue
 
       if fields[0] == "FILE" :
@@ -257,7 +257,7 @@ ConfigData = rl.LoadCfg()
 # print path - implies check of config data
 print("File root: ", ConfigData['FileService']['FileRoot'])
 
-mqttc = rl.MQttClient(ConfigData['MqttIp']) # setup & connect MQtt client to receive messages from robot
+Rcc = rl.RlCommsClient(ConfigData['RlComms']) # setup & connect Robotlib Comms Client to receive messages from robot
 
 # ExportFormat field
 tk.Label(root, text="Export format").grid(row=0, column=4)
@@ -302,7 +302,7 @@ createToolTip(BtnSend,  "Send file from memory to robot")
 createToolTip(BtnExport,"Export (convert) file from memory to disk")
 
 # request time (and robot name) on startup
-mqttc.mqttc.publish("Robotlib/ComRawTx", "clockprint\r")
+Rcc.Publish("Robotlib/ComRawTx", "clockprint\r")
 
 # drive GUI
 root.after(1000, DataTakt)

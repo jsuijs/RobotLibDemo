@@ -47,15 +47,16 @@ class SerialBridge:
          raise SystemExit(99)
 
       # setup mqtt
-      self.MqttClient = rl.MQttClient(self.ConfigData['MqttIp'], "Robotlib/ComRawTx")
-      self.MqttClient.PassStream = True # we want raw data, not frames
-      self.MqttClient.mqttc.publish("Robotlib/ComRawRx", "[[SerialBridge started.]]\r\n")
+#      self.Rcc = rl.MQttClient(self.ConfigData['MqttIp'], "Robotlib/ComRawTx")
+      self.Rcc = rl.RlCommsClient(self.ConfigData['RlComms'], "Robotlib/ComRawTx")
+      self.Rcc.Raw() # we want raw data, not frames
+      self.Rcc.Publish("Robotlib/ComRawRx", "[[SerialBridge started.]]\r\n")
 
       self.MySlip = rl.FrameDecoder()
 
    def cleanup(self):
-      self.MqttClient.mqttc.publish("Robotlib/ComRawRx", "[[SerialBridge terminated.]]\r\n")
-      self.MqttClient.mqttc.disconnect()
+      self.Rcc.Publish("Robotlib/ComRawRx", "[[SerialBridge terminated.]]\r\n")
+      self.Rcc.Disconnect()
       self.ser.close()
       print("Cleaning up done.")
 
@@ -78,7 +79,7 @@ class SerialBridge:
 
             # post on Mqtt
             if self.ConfigData['Bridge']['UseMqtt'] :
-               self.MqttClient.mqttc.publish("Robotlib/ComRawRx", line)
+               self.Rcc.Publish("Robotlib/ComRawRx", line)
 
             if self.UseAltChannel :
                Packets = self.MySlip.decode(line)
@@ -94,8 +95,8 @@ class SerialBridge:
                sys.stdout.flush()
 
          # process message from Mqtt to Serial
-         while len(self.MqttClient.MsgQueue) :
-            Message = self.MqttClient.MsgQueue.pop(0)
+         while len(self.Rcc.MsgQueue) :
+            Message = self.Rcc.MsgQueue.pop(0)
             self.ser.write(Message.encode("cp1252"))
             self.ser.flush()
 
@@ -106,12 +107,10 @@ class SerialBridge:
                #   print("aaa" + daa + Message)
                sys.stdout.flush()
 
-
       # handle app closure
       except (KeyboardInterrupt):
          print("Ctrl-C received, exit.")
          self.cleanup()
-
 
       except Exception as ex:
          print("com port gone?")

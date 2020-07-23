@@ -39,13 +39,15 @@ def LoadCfg(filename = 'RlCommonCfg.json') :
    return CfgData
 
 
+
+
 # MQtt ------------------------------------------------------------------------
 import paho.mqtt.client as mqtt
 import os
 import sys
 
-class MQttClient():
-   def __init__(self, MqttIp, Topic = "Robotlib/ComRawRx"):
+class _MQttClient():
+   def __init__(self, MqttIp, Topic):
 
       import sys
       print(sys.version)
@@ -53,7 +55,7 @@ class MQttClient():
       #create an mqtt client
       mypid = os.getpid()
       client_uniq = "pc_pub_"+str(mypid)
-      self.mqttc = mqtt.Client(client_uniq)
+      self._mqttc = mqtt.Client(client_uniq)
 
       self.MsgQueue=[]
       self.Topic = Topic;
@@ -62,31 +64,34 @@ class MQttClient():
       self.MySlip = FrameDecoder()  # used when PassStream remains false
 
       #attach MQTT callbacks
-      self.mqttc.on_connect = self.on_connect
-      self.mqttc.on_message = self.on_message
+      self._mqttc.on_connect = self.on_connect
+      self._mqttc.on_message = self.on_message
 
       #connect to broker
       print("Connect to mqtt server at " + MqttIp)
-      self.mqttc.connect(MqttIp, 1883, 60)
+      self._mqttc.connect(MqttIp, 1883, 60)
 
-      self.mqttc.loop_start()   # run mqtt client in separate thread
+      self._mqttc.loop_start()   # run mqtt client in separate thread
 
    def on_message(self, client, userdata, message):
-      #print("Received message '" + message.payload.decode("cp1252", 'ignore') + "' on topic '"
-      #    + message.topic + "' with QoS " + str(message.qos))
+      print("====")
+      print("Received message:" + message.payload.decode("cp1252", 'ignore') + "'\non topic '"
+          + message.topic + "' with QoS " + str(message.qos))
       MsgData = message.payload.decode("cp1252", 'ignore')
       if self.PassStream == True :
          # queue stream (raw input)
+         print('apppend\n', MsgData)
          self.MsgQueue.append(MsgData)
       else :
          # queue frames (decode stream into frames, default)
+         print('slip\n', MsgData)
          Packets = self.MySlip.decode(message.payload)
          if len(Packets):
             self.MsgQueue.extend(Packets)
             #print(Packets)
 
    def on_connect(self, client, userdata, flags, rc):
-      print("Connection returned result: ", rc)
+      print("Connection returned result: ", rc, self.Topic)
       client.subscribe(self.Topic, qos=0)
       if rc == 0:
          #rc 0 successful connect
@@ -94,8 +99,34 @@ class MQttClient():
       else:
          raise Exception
 
-# MQtt ------------------------------------------------------------------------
+   def Publish(self, Topic, Data) :
+      #Data = Data.encode("cp1252", 'ignore')
+      print("Pub", Topic, Data)
+      self._mqttc.publish(Topic, Data)
 
+   def Disconnect(self) :
+      self._mqttc.disconnect()
+
+
+# RlCommsClient  --------------------------------------------------------------
+class RlCommsClient() :
+   def __init__(self, CfgData, Topic = "Robotlib/ComRawRx"):
+      print("RlCommsClient", Topic)
+      self.UseUdp = CfgData['UseUdp']
+      if self.UseUdp :
+         print("UseUdp")
+      else :
+         self.mqc = _MQttClient(CfgData['MqttIp'], Topic)
+         self.MsgQueue = self.mqc.MsgQueue
+
+   def Publish(self, Topic, Data) :
+      self.mqc.Publish(Topic, Data)
+
+   def Disconnect(self) :
+      self.mqc.Disconnect()
+
+   def Raw(self) :
+      self.mqc.PassStream = True
 
 # FrameDecoder ----------------------------------------------------------------
 # loosely based on SLIP decoder by Roman Haefeli

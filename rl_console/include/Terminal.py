@@ -136,7 +136,7 @@ def UploaderSendLines():
       Data = Data.replace(b'\n', b'\r')   # crlf on windows translates to \n, but robotlib expects \r (enter)
       if args.com == None :
          # no com-port => mqtt
-         mqttc.publish("Robotlib/ComRawTx", Data)
+         Rcc.Publish("Robotlib/ComRawTx", Data)
       else :
          ser.write(Data)
       UploaderCount += 1
@@ -154,7 +154,7 @@ def PlayerSendLines():
       Data = PlayerLines.pop(0).encode("cp1252", 'ignore')
       if args.com == None :
          # no com-port => mqtt
-         mqttc.publish("Robotlib/ComRawRx", Data)
+         Rcc.Publish("Robotlib/ComRawRx", Data)
       else :
          ser.write(Data)
       PlayerCount += 1
@@ -168,7 +168,7 @@ def PlayerSendLines():
 def LineInputEnterKey(event):
    Data = (LineInput.get() + "\r").encode("cp1252", 'ignore')
    if args.com == None :
-      mqttc.publish("Robotlib/ComRawTx", Data)
+      Rcc.Publish("Robotlib/ComRawTx", Data)
    else :
       ser.write(Data)
 
@@ -278,14 +278,10 @@ createToolTip(BtnUpload,   "Upload file to serial)")
 createToolTip(BtnPlayer,   "Replay (log)file (publish like received from serial)")
 createToolTip(BtnAbort,    "Abort Upload and Replay")
 
-# MQTT stuff
-def on_message(client, userdata, message):
+def RxMessage(InPayLoad) :
    global FrameFilterState
 
-   if (sys.version_info > (3, 0)):
-      InPayLoad = message.payload.decode('iso-8859-1')
-   else:
-      InPayLoad = message.payload
+   print(InPayLoad)
 
    if CbValueFrames.get() :
       # show all data
@@ -346,36 +342,27 @@ def on_message(client, userdata, message):
    if LogStart.Flag:
       LogStart.File.write(message.payload)
 
-def on_connect(client, userdata, flags, rc):
-   print("Connected with result code "+str(rc))
-   mqttc.subscribe("Robotlib/ComRawRx", qos=0)
+def RxTakt() :
 
-def SerialRx() :
-   if  ser.inWaiting() > 0:
-      line = ser.read(ser.inWaiting())
-      Memo.configure(state='normal')
-      Memo.insert(tk.END, line)
-      Memo.see(tk.END)
-      Memo.configure(state='disabled')
-      if LogStart.Flag:
-         LogStart.File.write(line)
+   if (args.com != None) :
 
-   master.after(10, SerialRx) # check serial again soon
+      if  ser.inWaiting() > 0:
+         line = ser.read(ser.inWaiting())
+         RxMessage(line)
+
+   else :
+      while len(Rcc.MsgQueue) :
+         Message = Rcc.MsgQueue.pop(0)
+         RxMessage(Message)
+
+   master.after(10, RxTakt) # check again soon
 
 if (args.com == None) :
    print("No com port -> MQTT")
 
-   #create an mqtt client & connect
-   mypid = os.getpid()
-   client_uniq = os.path.basename(__file__)+str(mypid)
-   mqttc = rl.mqtt.Client(client_uniq)
-   mqttc.on_message  = on_message
-   mqttc.on_connect = on_connect  # handles subscribe
+   Rcc = rl.RlCommsClient(ConfigData['RlComms'])
+   Rcc.Raw() # we want raw data, not frames
 
-   mqttc.connect(ConfigData['MqttIp'], ConfigData['MqttPort'], 60)
-
-   # run mqtt client in separate thread
-   mqttc.loop_start()
 else :
    print("Use serial port %s (MQTT disabled)" % args.com)
    import serial
@@ -398,7 +385,6 @@ LineInput.focus_force()
 master.after(100, PlayerSendLines)
 master.after(100, UploaderSendLines)
 
-if (args.com != None) :
-   master.after(10, SerialRx) # check serial again soon
+master.after(10, RxTakt) # check  again soon
 
 tk.mainloop()
