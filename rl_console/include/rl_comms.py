@@ -1,4 +1,5 @@
 # intended to be used with Python2 and Python3
+import socket
 
 
 # Configuration file stuff ----------------------------------------------------
@@ -47,7 +48,7 @@ import os
 import sys
 
 class _MQttClient():
-   def __init__(self, MqttIp, Topic):
+   def __init__(self, MqttIp, SubscribeTopic):
 
       import sys
       print(sys.version)
@@ -58,7 +59,7 @@ class _MQttClient():
       self._mqttc = mqtt.Client(client_uniq)
 
       self.MsgQueue=[]
-      self.Topic = Topic;
+      self.SubscribeTopic = SubscribeTopic;
       self.PassStream = False # default pass frames from stream.
 
       self.MySlip = FrameDecoder()  # used when PassStream remains false
@@ -91,42 +92,141 @@ class _MQttClient():
             #print(Packets)
 
    def on_connect(self, client, userdata, flags, rc):
-      print("Connection returned result: ", rc, self.Topic)
-      client.subscribe(self.Topic, qos=0)
+      print("Connection returned result: ", rc, self.SubscribeTopic)
+      client.subscribe(self.SubscribeTopic, qos=0)
       if rc == 0:
          #rc 0 successful connect
          print("Connected")
       else:
          raise Exception
 
-   def Publish(self, Topic, Data) :
+   def Publish(self, Data) :
       #Data = Data.encode("cp1252", 'ignore')
-      print("Pub", Topic, Data)
-      self._mqttc.publish(Topic, Data)
+      print("Pub", self.PublishTopic, Data)
+      self._mqttc.publish(self.PublishTopic, Data)
+
+   def PublishReverse(self, Data) :
+      # publish on subscribe topic, used for playback from terminal...
+      #Data = Data.encode("cp1252", 'ignore')
+      print("PubR", self.SubcribeTopic, Data)
+      self._mqttc.publish(self.SubcribeTopic, Data)
 
    def Disconnect(self) :
       self._mqttc.disconnect()
 
 
-# RlCommsClient  --------------------------------------------------------------
-class RlCommsClient() :
-   def __init__(self, CfgData, Topic = "Robotlib/ComRawRx"):
-      print("RlCommsClient", Topic)
-      self.UseUdp = CfgData['UseUdp']
-      if self.UseUdp :
-         print("UseUdp")
-      else :
-         self.mqc = _MQttClient(CfgData['MqttIp'], Topic)
-         self.MsgQueue = self.mqc.MsgQueue
+class _UdpClient():
+   def __init__(self, SubscribePort):
 
-   def Publish(self, Topic, Data) :
-      self.mqc.Publish(Topic, Data)
+      self.RxSock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) # Internet, UDP
+
+      self.RxSock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+      self.RxSock.bind(("127.0.0.1", SubscribePort))
+      self.RxSock.setblocking(0)
+
+      self.MsgQueue=[]
+      self.SubscribePort = SubscribePort;
+      self.PassStream = False # default pass frames from stream.
+
+      self.MySlip = FrameDecoder()  # used when PassStream remains false
+
+      self.TxSock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+
+   def Takt(self):
+      try:
+         while True :
+            MsgData, addr = self.RxSock.recvfrom(65535) # buffer size is 1024 bytes
+            print("received message:", MsgData)
+#      print("====")
+#      print("Received message:" + message.payload.decode("cp1252", 'ignore') + "'\non topic '"
+#          + message.topic + "' with QoS " + str(message.qos))
+            if self.PassStream == True :
+               # queue stream (raw input)
+               MsgData = MsgData.decode("cp1252", 'ignore')
+               print('apppend\n', MsgData)
+               self.MsgQueue.append(MsgData)
+            else :
+               # queue frames (decode stream into frames, default)
+               print('slip\n', MsgData)
+               Packets = self.MySlip.decode(MsgData)
+               if len(Packets):
+                  self.MsgQueue.extend(Packets)
+                  print(Packets)
+      except(BlockingIOError):
+         return
+
+   def Publish(self, Data) :
+      #Data = Data.encode("cp1252", 'ignore')
+      print("Pub", self.PublishPort, Data)
+      self.TxSock.sendto(Data, ("127.0.0.1", self.PublishPort))
+
+   def PublishReverse(self, Data) :
+      # publish on subscribe topic, used for playback from terminal...
+      #Data = Data.encode("cp1252", 'ignore')
+      print("PubR", self.SubscribePort, Data)
+      self.TxSock.sendto(Data, ("127.0.0.1", self.SubscribePort))
 
    def Disconnect(self) :
-      self.mqc.Disconnect()
+      pass
+
+# RlCommsClient  --------------------------------------------------------------
+class RlCommsClient() :
+   def __init__(self, CfgData, Reverse = False):
+      print("RlCommsClient", Reverse)
+      self.UseUdp = CfgData['UseUdp']
+      if self.UseUdp :
+         SubscribePort = 5005
+         if Reverse : SubscribePort = 5006
+         self.udpc = _UdpClient(SubscribePort)
+         self.udpc.PublishPort = 5006
+         if Reverse : self.udpc.PublishPort = 5005
+      else :
+         SubscribeTopic = "Robotlib/ComRawRx"
+         if Reverse : SubscribeTopic = "Robotlib/ComRawTx"
+         self.mqc = _MQttClient(CfgData['MqttIp'], SubscribeTopic)
+         self.mqc.PublishTopic = "Robotlib/ComRawTx"
+         if Reverse : self.mqc.PublishTopic = "Robotlib/ComRawRx"
+
+         #self.MsgQueue = self.mqc.MsgQueue
+
+   def MsgCount(self):
+      if self.UseUdp :
+         self.udpc.Takt()
+         return len(self.udpc.MsgQueue)
+      else :
+         return len(self.mqc.MsgQueue)
+
+   def MsgGet(self):
+      if self.UseUdp :
+         return self.udpc.MsgQueue.pop(0)
+      else :
+         return self.mqc.MsgQueue.pop(0)
+
+   def Publish(self, Data) :
+      if isinstance(Data, str) : Data = Data.encode()
+      if self.UseUdp :
+         self.udpc.Publish(Data)
+      else :
+         self.mqc.Publish(Data)
+
+   def PublishReverse(self, Data) :
+      if isinstance(Data, str) : Data = Data.encode()
+      if self.UseUdp :
+         self.udpc.PublishReverse(Data)
+      else :
+         self.mqc.PublishReverse(Data)
+
+   def Disconnect(self) :
+      if self.UseUdp :
+         self.udpc.Disconnect()
+      else :
+         self.mqc.Disconnect()
 
    def Raw(self) :
-      self.mqc.PassStream = True
+      if self.UseUdp :
+         self.udpc.PassStream = True
+      else :
+         self.mqc.PassStream = True
 
 # FrameDecoder ----------------------------------------------------------------
 # loosely based on SLIP decoder by Roman Haefeli

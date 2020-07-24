@@ -154,7 +154,7 @@ def PlayerSendLines():
       Data = PlayerLines.pop(0).encode("cp1252", 'ignore')
       if args.com == None :
          # no com-port => mqtt
-         Rcc.Publish("Robotlib/ComRawRx", Data)
+         Rcc.PublishReverse(Data)
       else :
          ser.write(Data)
       PlayerCount += 1
@@ -168,7 +168,7 @@ def PlayerSendLines():
 def LineInputEnterKey(event):
    Data = (LineInput.get() + "\r").encode("cp1252", 'ignore')
    if args.com == None :
-      Rcc.Publish("Robotlib/ComRawTx", Data)
+      Rcc.Publish(Data)
    else :
       ser.write(Data)
 
@@ -351,8 +351,8 @@ def RxTakt() :
          RxMessage(line)
 
    else :
-      while len(Rcc.MsgQueue) :
-         Message = Rcc.MsgQueue.pop(0)
+      while Rcc.MsgCount() :
+         Message = Rcc.MsgGet()
          RxMessage(Message)
 
    master.after(10, RxTakt) # check again soon

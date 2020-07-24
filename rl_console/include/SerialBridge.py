@@ -48,14 +48,14 @@ class SerialBridge:
 
       # setup mqtt
 #      self.Rcc = rl.MQttClient(self.ConfigData['MqttIp'], "Robotlib/ComRawTx")
-      self.Rcc = rl.RlCommsClient(self.ConfigData['RlComms'], "Robotlib/ComRawTx")
+      self.Rcc = rl.RlCommsClient(self.ConfigData['RlComms'], True)
       self.Rcc.Raw() # we want raw data, not frames
-      self.Rcc.Publish("Robotlib/ComRawRx", "[[SerialBridge started.]]\r\n")
+      self.Rcc.Publish("[[SerialBridge started.]]\r\n")
 
       self.MySlip = rl.FrameDecoder()
 
    def cleanup(self):
-      self.Rcc.Publish("Robotlib/ComRawRx", "[[SerialBridge terminated.]]\r\n")
+      self.Rcc.Publish("[[SerialBridge terminated.]]\r\n")
       self.Rcc.Disconnect()
       self.ser.close()
       print("Cleaning up done.")
@@ -79,7 +79,7 @@ class SerialBridge:
 
             # post on Mqtt
             if self.ConfigData['Bridge']['UseMqtt'] :
-               self.Rcc.Publish("Robotlib/ComRawRx", line)
+               self.Rcc.Publish(line)
 
             if self.UseAltChannel :
                Packets = self.MySlip.decode(line)
@@ -95,8 +95,8 @@ class SerialBridge:
                sys.stdout.flush()
 
          # process message from Mqtt to Serial
-         while len(self.Rcc.MsgQueue) :
-            Message = self.Rcc.MsgQueue.pop(0)
+         while self.Rcc.MsgCount() :
+            Message = self.Rcc.MsgGet()
             self.ser.write(Message.encode("cp1252"))
             self.ser.flush()
 
