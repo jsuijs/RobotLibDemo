@@ -340,7 +340,7 @@ def RxMessage(InPayLoad) :
    #print("FilteredPayload", FilteredPayload)
 
    if LogStart.Flag:
-      LogStart.File.write(message.payload)
+      LogStart.File.write(InPayLoad.encode())
 
 def RxTakt() :
 

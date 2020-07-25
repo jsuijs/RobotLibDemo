@@ -6,9 +6,7 @@ from   rl_gui  import *    # RobotLib common code
 # http://www.python-course.eu/tkinter_entry_widgets.php
 import tkinter.scrolledtext as tkst
 
-import paho.mqtt.client as mqtt
 import os
-import time
 import json
 
 OutputLines    = []
@@ -56,7 +54,7 @@ def SendOutputLines():
    master.after(100, SendOutputLines)
    if len(OutputLines) > 0 :
       s = OutputLines.pop(0).replace("\n", "\r")
-      mqttc.publish("Robotlib/ComRawTx", s.encode("cp1252", 'ignore'))
+      Rcc.Publish(s)
       print (":".join("{:02x}".format(ord(c)) for c in s))
 
 def CtrlEnterKey(event):
@@ -105,11 +103,7 @@ master.columnconfigure(3, weight = 3 )
 master.rowconfigure(1, weight = 3 )
 
 #create an mqtt client & connect
-mqttc = mqtt.Client(os.path.basename(__file__)+str(os.getpid()))
-mqttc.connect(ConfigData['MqttIp'], ConfigData['MqttPort'], 60)
-
-# run mqtt client in separate thread
-mqttc.loop_start()
+Rcc = rl.RlCommsClient(ConfigData['RlComms'])
 
 # drive GUI
 T.focus_force()
