@@ -117,6 +117,10 @@ void DefaultDemoSetup()
 
    // Sensor on (not off, not calibration)
    LineSensor.On();
+
+   // Add linesensor to registry.
+   Registry.Add("linesensor", LineSensor, 0, true);
+
 }
 
 //-----------------------------------------------------------------------------
