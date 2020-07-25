@@ -66,7 +66,7 @@ def ClickSend() :
    for msg in MessageBuffer:
       msg = '\xc1' + msg + '\xc0'   # add framing (but not yet escaping for binary files...)
       print(msg)
-      Rcc.Publish("Robotlib/ComRawTx", msg.encode("cp1252"))
+      Rcc.Publish(msg.encode("cp1252"))
       time.sleep(0.15)  # Delays in seconds.
 
 #------------------------------------------------------------------------------
@@ -158,11 +158,11 @@ def SaveMsgToFile(FileRoot, FileName, FileData) :
 
 #------------------------------------------------------------------------------
 def DataTakt():
-   #print("DataTakt")
 
    # process messages
-   while len(Rcc.MsgQueue) > 0 :
-      Message = Rcc.MsgQueue.pop(0)
+   while Rcc.MsgCount() :
+      Message = Rcc.MsgGet()
+      print(Message)
       fields = Message.split()             # whitespace separated
       if fields[0] == "STAMP" :
          print("msg:", len(fields), fields)
@@ -171,7 +171,7 @@ def DataTakt():
             # clockset  dd mm yyyy hh mm ss - set clock date & time
             Data = datetime.datetime.now().strftime("clockset %d %m %Y %H %M %S\r")
             MemoAdd("Send time: " + Data)
-            Rcc.Publish("Robotlib/ComRawTx", Data)
+            Rcc.Publish(Data)
          continue
 
       if fields[0] == "FILE" :
@@ -233,7 +233,6 @@ def DataTakt():
 DataTakt.FileCounter = 0   # init var
 
 
-
 #------------------------------------------------------------------------------
 #------------------------------------------------------------------------------
 # start of main code
@@ -256,8 +255,6 @@ ConfigData = rl.LoadCfg()
 
 # print path - implies check of config data
 print("File root: ", ConfigData['FileService']['FileRoot'])
-
-Rcc = rl.RlCommsClient(ConfigData['RlComms']) # setup & connect Robotlib Comms Client to receive messages from robot
 
 # ExportFormat field
 tk.Label(root, text="Export format").grid(row=0, column=4)
@@ -301,8 +298,10 @@ createToolTip(BtnLoad,  "Load file from disk into memory")
 createToolTip(BtnSend,  "Send file from memory to robot")
 createToolTip(BtnExport,"Export (convert) file from memory to disk")
 
+Rcc = rl.RlCommsClient(ConfigData['RlComms']) # setup & connect Robotlib Comms Client to receive messages from robot
+
 # request time (and robot name) on startup
-Rcc.Publish("Robotlib/ComRawTx", "clockprint\r")
+Rcc.Publish("clockprint\r")
 
 # drive GUI
 root.after(1000, DataTakt)

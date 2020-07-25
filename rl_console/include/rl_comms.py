@@ -1,7 +1,6 @@
 # intended to be used with Python2 and Python3
 import socket
 
-
 # Configuration file stuff ----------------------------------------------------
 def LoadCfg(filename = 'RlCommonCfg.json') :
    # load configuration file
@@ -38,9 +37,6 @@ def LoadCfg(filename = 'RlCommonCfg.json') :
          json.dump(CfgData, fp, sort_keys=True, indent=4)
 
    return CfgData
-
-
-
 
 # MQtt ------------------------------------------------------------------------
 import paho.mqtt.client as mqtt
@@ -102,13 +98,13 @@ class _MQttClient():
 
    def Publish(self, Data) :
       #Data = Data.encode("cp1252", 'ignore')
-      print("Pub", self.PublishTopic, Data)
+      print("mPub", self.PublishTopic, Data)
       self._mqttc.publish(self.PublishTopic, Data)
 
    def PublishReverse(self, Data) :
       # publish on subscribe topic, used for playback from terminal...
       #Data = Data.encode("cp1252", 'ignore')
-      print("PubR", self.SubcribeTopic, Data)
+      print("mPubR", self.SubcribeTopic, Data)
       self._mqttc.publish(self.SubcribeTopic, Data)
 
    def Disconnect(self) :
@@ -135,7 +131,7 @@ class _UdpClient():
    def Takt(self):
       try:
          while True :
-            MsgData, addr = self.RxSock.recvfrom(65535) # buffer size is 1024 bytes
+            MsgData, addr = self.RxSock.recvfrom(65535) # buffer size is 65535 bytes
             print("received message:", MsgData)
 #      print("====")
 #      print("Received message:" + message.payload.decode("cp1252", 'ignore') + "'\non topic '"
@@ -157,14 +153,14 @@ class _UdpClient():
 
    def Publish(self, Data) :
       #Data = Data.encode("cp1252", 'ignore')
-      print("Pub", self.PublishPort, Data)
-      self.TxSock.sendto(Data, ("127.0.0.1", self.PublishPort))
+      print("uPub", self.PublishPort, Data)
+      self.TxSock.sendto(Data, ("127.255.255.255", self.PublishPort))
 
    def PublishReverse(self, Data) :
       # publish on subscribe topic, used for playback from terminal...
       #Data = Data.encode("cp1252", 'ignore')
-      print("PubR", self.SubscribePort, Data)
-      self.TxSock.sendto(Data, ("127.0.0.1", self.SubscribePort))
+      print("uPubR", self.SubscribePort, Data)
+      self.TxSock.sendto(Data, ("127.255.255.255", self.SubscribePort))
 
    def Disconnect(self) :
       pass
@@ -172,7 +168,6 @@ class _UdpClient():
 # RlCommsClient  --------------------------------------------------------------
 class RlCommsClient() :
    def __init__(self, CfgData, Reverse = False):
-      print("RlCommsClient", Reverse)
       self.UseUdp = CfgData['UseUdp']
       if self.UseUdp :
          SubscribePort = 5005
@@ -180,6 +175,11 @@ class RlCommsClient() :
          self.udpc = _UdpClient(SubscribePort)
          self.udpc.PublishPort = 5006
          if Reverse : self.udpc.PublishPort = 5005
+
+         print("RlCommsClient UPD, reverse:", Reverse)
+         print("   Publish:  ", self.udpc.PublishPort)
+         print("   Subscribe:", self.udpc.SubscribePort)
+
       else :
          SubscribeTopic = "Robotlib/ComRawRx"
          if Reverse : SubscribeTopic = "Robotlib/ComRawTx"
@@ -187,7 +187,9 @@ class RlCommsClient() :
          self.mqc.PublishTopic = "Robotlib/ComRawTx"
          if Reverse : self.mqc.PublishTopic = "Robotlib/ComRawRx"
 
-         #self.MsgQueue = self.mqc.MsgQueue
+         print("RlCommsClient MQTT, reverse:", Reverse)
+         print("   Publish:  ", self.udpc.PublishTopic)
+         print("   Subscribe:", self.udpc.SubscribeTopic)
 
    def MsgCount(self):
       if self.UseUdp :
