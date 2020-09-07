@@ -14,10 +14,5 @@ Contains demo-files for RobotLib features.
 Arduino master code to control the LidarPreProcessor module. See
 [RobotMC.be](http://wiki.robotmc.be/index.php/LidarPreProcessor) for details.
 
-### rl_console
-Terminal program, command editor, file utilities, graphs. All python scripts
-that run on a desktop and interact with a robot. See
-[RobotMC.be](http://wiki.robotmc.be/index.php/RobotLib_Console) for details.
-
 ---
 
