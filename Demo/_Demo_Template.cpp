@@ -32,6 +32,7 @@
 // tags_end
 //-----------------------------------------------------------------------------
 #include "RobotLib.h"
+#include "project.h"
 
 #define DEMO_NAME DemoXYZ
 

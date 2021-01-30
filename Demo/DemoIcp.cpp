@@ -32,6 +32,7 @@
 // tags_end
 //-----------------------------------------------------------------------------
 #include "RobotLib.h"
+#include "project.h"
 
 #define DEMO_NAME DemoICP
 
@@ -92,109 +93,111 @@ double cpu_time_used;
 TPointList IcpReference(ICP_MAX_POINTS);  // Roboramabaan or alternative
 TPointList IcpTarget(ICP_MAX_POINTS);     // Measurements
 
+// prototype for my mapping function (see below)
+static TPoint FindMyCLosestPoint(const TPoint &InPoint);
 
 //-----------------------------------------------------------------------------
-// DemoSetup -
+// DefaultDemoSetup -
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
-void DemoSetup()
+void DefaultDemoSetup()
 {
    printf("DemoSetup for Icp - Iterative Closest point..\n");
+
+   for (int x=0; x<1000; x+= 10) IcpReference.Add(x, 0);
+   for (int y=0; y< 600; y+= 10) IcpReference.Add(0, y);
 }
 
 //-----------------------------------------------------------------------------
-// CliCmd_Demo -
+// CliCmd_DefaultDemo -
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
-void CliCmd_Demo(int ParamCounter, int *Params)
+void WEAK CliCmd_DefaultDemo(int NrParams, TCiParams *P)
 {  static TPose pose;
 
    printf("Demo command for Icp - Iterative Closest point.\n");
 
-   if (ParamCounter != 1) {
+   if (NrParams < 1) {
       printf("use: demo <n>, where n is the sub command\n");
       printf("   Please look in the source code for valid values of n\n");
       printf("   (Sorry, no solid demo yet...)\n");
       return;
    }
 
-   switch (Params[0]) {
+   switch (P[0].PInt) {
 
       case 1 : {
-         printf("Dump Reference\n");
-         IcpReference.DumpAll(0);
-         break;
+         printf("Publish Reference\n");
+         IcpReference.Publish(1);
       }
+      break;
 
       case 2 : {
          printf("Update position to fixed location\n");
          Position.SetPose(300, 300, 0);
          Position.Print();
-         break;
       }
+      break;
 
       case 10 : {
-         printf("Load IcpTarget (fixed setup)\n");
-      	IcpTarget.Clear();
-         for (int i=0;   i<360; i++) IcpTarget.Add(i*10, 30);
-         printf("IcpTarget.Count: %d\n", IcpTarget.Count());
-// Alternative: load roboramabaan (Roborama Track)
-//      	if (IcpReference.Count() == 0) {
-//         	IcpReference.Clear();
-//            PlGetRoboramaBaanPoints(IcpReference);
-//            printf("Reference.Count: %d\n", IcpReference.Count());
-//            //Reference.Dump();
-//         }
-         break;
-      }
-
-      case 11 : {
          printf("Load IcpTarget from Lidar\n");
       	IcpTarget.Clear();
-      	RpLidar.GetPoints(IcpTarget, -90, 90);
+      	MyLidar.GetPoints(IcpTarget, 180, 270);
 
          printf("IcpTarget.Count: %d\n", IcpTarget.Count());
-         break;
       }
+      break;
 
-      case 12 : {
-         printf("Dump IcpTarget\n");
-         printf("\n!** Color 0 0 255\n");
-         IcpTarget.DumpAll(0);
-         break;
+      case 11 : {
+         printf("Publish IcpTarget\n");
+         IcpTarget.Publish(2);
       }
+      break;
 
       case 20 : {
-         printf("IcpAllign\n");
+         if (NrParams < 2) P[1].PInt = 9;
+         printf("IcpAllign %d itterations\n", P[1].PInt);
          StopWatchReset();
-         IcpAlign(IcpReference, IcpTarget, pose, 1);
+
+         IcpAlign(FindMyCLosestPoint, IcpTarget, pose, P[1].PInt);   // ** the works **
 
          printf("tijd: %d us\n", StopWatchGet());
          printf("pose %d %d %f\n", pose.X, pose.Y, pose.Angle);
-
-         break;
       }
+      break;
 
       case 21 : {
          printf("Update position to pose\n");
-// old code, remove when new code below has been tested
-//         Position.CorrectXY(Position.X + pose.X, Position.Y + pose.Y);
-//         Position.CorrectAngleHires(Position.AngleHires() + (int)(256* RAD2GRAD(pose.Yaw)));
 
-         // Calculate NewPose of robot (which is current position + pose calculated by ICP)
-         TPose NewPose;
-         NewPose.X      = pose.X + Position.Pose.X;
-         NewPose.Y      = pose.Y + Position.Pose.Y;
-         NewPose.Angle  = pose.Angle + Position.Pose.Angle;
+         pose.X      += Position.X;
+         pose.Y      += Position.Y;
+         pose.Angle  += Position.Angle;
 
-         Position.SetPose(NewPose);   // SetPose(X, Y, Degrees) is not used, since it has a lower angular resolution...
+         Position.SetPose(pose);
+         pose -= pose;  // clear pose
          Position.Print();
-         break;
       }
+      break;
 
+      default : {
+         printf("Error: invalid sub-command %d\n", P[0].PInt);
+      }
+      break;
    }
 }
 
 //-------------
 // OTHER CODE
 //-------------
+
+
+//-----------------------------------------------------------------------------
+// FindMyCLosestPoint - Stub function
+//-----------------------------------------------------------------------------
+// Create this function to map Icp search requests to your world-reference
+//-----------------------------------------------------------------------------
+static TPoint FindMyCLosestPoint(const TPoint &InPoint)
+{
+   // seach for InPoint in list of reference points
+   return IcpReference.Search(InPoint);
+}
