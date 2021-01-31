@@ -43,16 +43,16 @@
 Sorry, still a crude demo...
 
 Steps of using ICP:
-* (10) load a reference, a group of points that might be seen by the sensor.
+* load a reference, a list of points or list of lines that might be seen by the sensor.
 
-* (2) make sure the robot (estimated) position and orientation are somewhere near the actuals.
+* make sure the robot (estimated) position and orientation are somewhere near the actuals.
 
-* (11) get target poins from sensor (e.g. lidar).
+* get target poins from sensor (e.g. lidar).
 
-* (20) use IcpAllign to get an estimate of the actual position. Since it is itterative, you can
+* use IcpAllign to get an estimate of the actual position. Since it is itterative, you can
   call it multiple times to get better results (if time permits).
 
-* (21) Update position to pose (== ICP estimate)
+* Update position to pose (== ICP estimate)
 
 Notes:
 * IcpAllign (the core algorithm) works by calculating the offset of each sensor
@@ -68,33 +68,28 @@ Notes:
 * New sensor readings are (in general) based on the robot position. So any
   readings taken before the position update are inaccurate (unless corrected).
   So in general, wait for a full lidar scan after a position update.
-
-
 */
 
 //-------------
 // DECLARATIONS
 //-------------
+//#define USE_REF_POINTS        // see comments in DefaultDemoSetup
+#define ICP_MAX_POINTS 1500   // max # of points in list
+
+// prototype for my mapping function (see below)
+static TPoint FindMyCLosestPoint(const TPoint &InPoint);
 
 //-------------
 // INSTANCES
 //-------------
-#include <time.h>
 
-#define ICP_MAX_POINTS 1500     // max # of points in list
+#ifdef USE_REF_POINTS
+   TPointList IcpReferencePoints(ICP_MAX_POINTS);  // Roboramabaan or alternative
+#else
+   TLineSegmentList IcpReferenceLines(10);
+#endif
 
-int LastRev = -1;
-
-
-clock_t start, end;
-double cpu_time_used;
-
-
-TPointList IcpReference(ICP_MAX_POINTS);  // Roboramabaan or alternative
 TPointList IcpTarget(ICP_MAX_POINTS);     // Measurements
-
-// prototype for my mapping function (see below)
-static TPoint FindMyCLosestPoint(const TPoint &InPoint);
 
 //-----------------------------------------------------------------------------
 // DefaultDemoSetup -
@@ -104,8 +99,17 @@ void DefaultDemoSetup()
 {
    printf("DemoSetup for Icp - Iterative Closest point..\n");
 
-   for (int x=0; x<1000; x+= 10) IcpReference.Add(x, 0);
-   for (int y=0; y< 600; y+= 10) IcpReference.Add(0, y);
+#ifdef USE_REF_POINTS
+   // points referene is the 'old' way. Usefull when the world map is not based on (known) lines.
+   // note that 160 points example is about 6x slower than 2-line setup...
+   for (int x=0; x<1000; x+= 10) IcpReferencePoints.Add(x, 0);
+   for (int y=0; y< 600; y+= 10) IcpReferencePoints.Add(0, y);
+#else
+   // world reference based on lines
+   IcpReferenceLines.Add(0, 0, 3600,    0);
+   IcpReferenceLines.Add(0, 0,    0, 1200);
+#endif
+
 }
 
 //-----------------------------------------------------------------------------
@@ -128,21 +132,18 @@ void WEAK CliCmd_DefaultDemo(int NrParams, TCiParams *P)
 
       case 1 : {
          printf("Publish Reference\n");
-         IcpReference.Publish(1);
-      }
-      break;
-
-      case 2 : {
-         printf("Update position to fixed location\n");
-         Position.SetPose(300, 300, 0);
-         Position.Print();
+#ifdef USE_REF_POINTS
+         IcpReferencePoints.Publish(1);
+#else
+         IcpReferenceLines.Publish();
+#endif
       }
       break;
 
       case 10 : {
          printf("Load IcpTarget from Lidar\n");
       	IcpTarget.Clear();
-      	MyLidar.GetPoints(IcpTarget, 180, 270);
+      	MyLidar.GetPoints(IcpTarget, 135, 315);
 
          printf("IcpTarget.Count: %d\n", IcpTarget.Count());
       }
@@ -198,6 +199,10 @@ void WEAK CliCmd_DefaultDemo(int NrParams, TCiParams *P)
 //-----------------------------------------------------------------------------
 static TPoint FindMyCLosestPoint(const TPoint &InPoint)
 {
+#ifdef USE_REF_POINTS
    // seach for InPoint in list of reference points
-   return IcpReference.Search(InPoint);
+   return IcpReferencePoints.Search(InPoint);
+#else
+   return IcpReferenceLines.ClosestPoint(InPoint);
+#endif
 }
