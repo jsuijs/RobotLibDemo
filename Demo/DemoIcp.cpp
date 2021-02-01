@@ -1,7 +1,7 @@
 //-----------------------------------------------------------------------------
 // DemoIcp.cpp
 //
-// Copyright (c) 2013-2018 Joep Suijs - All rights reserved.
+// Copyright (c) 2013-2021 Joep Suijs - All rights reserved.
 //
 // This demo shows how to use ICP - Icp - Iterative Closest point..
 //
@@ -20,7 +20,7 @@
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
-// along with RobotLib.  If not, see <http://www.gnu.org/licenses/>.
+// along with RobotLib. If not, see <http://www.gnu.org/licenses/>.
 //
 // See http://wiki.robotmc.be/index.php?title=RobotLib for more information.
 //-----------------------------------------------------------------------------
@@ -74,7 +74,8 @@ Notes:
 // DECLARATIONS
 //-------------
 //#define USE_REF_POINTS        // see comments in DefaultDemoSetup
-#define ICP_MAX_POINTS 1500   // max # of points in list
+#define ICP_MAX_POINTS 1500   // max # of points in reference-point list
+#define ICP_MAX_LINES  15     // max # of lines in reference-line list
 
 // prototype for my mapping function (see below)
 static TPoint FindMyCLosestPoint(const TPoint &InPoint);
@@ -83,13 +84,13 @@ static TPoint FindMyCLosestPoint(const TPoint &InPoint);
 // INSTANCES
 //-------------
 
+TIcp Icp;    // use TIcp Icp(n) if you want space for n Icp.Targets (points). Default is 360.
+
 #ifdef USE_REF_POINTS
    TPointList IcpReferencePoints(ICP_MAX_POINTS);  // Roboramabaan or alternative
 #else
-   TLineSegmentList IcpReferenceLines(10);
+   TLineSegmentList IcpReferenceLines(ICP_MAX_LINES);
 #endif
-
-TPointList IcpTarget(ICP_MAX_POINTS);     // Measurements
 
 //-----------------------------------------------------------------------------
 // DefaultDemoSetup -
@@ -142,16 +143,16 @@ void WEAK CliCmd_DefaultDemo(int NrParams, TCiParams *P)
 
       case 10 : {
          printf("Load IcpTarget from Lidar\n");
-      	IcpTarget.Clear();
-      	MyLidar.GetPoints(IcpTarget, 135, 315);
+      	Icp.Targets.Clear();
+      	MyLidar.GetPoints(Icp.Targets, 135, 315);
 
-         printf("IcpTarget.Count: %d\n", IcpTarget.Count());
+         printf("Icp.Targets.Count: %d\n", Icp.Targets.Count());
       }
       break;
 
       case 11 : {
          printf("Publish IcpTarget\n");
-         IcpTarget.Publish(2);
+         Icp.Targets.Publish(2);
       }
       break;
 
@@ -160,7 +161,7 @@ void WEAK CliCmd_DefaultDemo(int NrParams, TCiParams *P)
          printf("IcpAllign %d itterations\n", P[1].PInt);
          StopWatchReset();
 
-         IcpAlign(FindMyCLosestPoint, IcpTarget, pose, P[1].PInt);   // ** the works **
+         Icp.IcpAlign(FindMyCLosestPoint, pose, P[1].PInt);   // ** the works **
 
          printf("tijd: %d us\n", StopWatchGet());
          printf("pose %d %d %f\n", pose.X, pose.Y, pose.Angle);
@@ -190,7 +191,6 @@ void WEAK CliCmd_DefaultDemo(int NrParams, TCiParams *P)
 //-------------
 // OTHER CODE
 //-------------
-
 
 //-----------------------------------------------------------------------------
 // FindMyCLosestPoint - Stub function
