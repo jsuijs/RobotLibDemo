@@ -100,6 +100,11 @@ void DefaultDemoSetup()
 {
    printf("DemoSetup for Icp - Iterative Closest point..\n");
 
+   Icp.SourceLidar = &MyLidar;                  // data source
+   Icp.FindCLosestPoint = FindMyCLosestPoint;   // link to reference-frame
+   Icp.LoadStart = 135;                         // range for load
+   Icp.LoadEnd   = 305;                         // range for load
+
 #ifdef USE_REF_POINTS
    // points referene is the 'old' way. Usefull when the world map is not based on (known) lines.
    // note that 160 points example is about 6x slower than 2-line setup...
@@ -118,8 +123,7 @@ void DefaultDemoSetup()
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 void WEAK CliCmd_DefaultDemo(int NrParams, TCiParams *P)
-{  static TPose pose;
-
+{
    printf("Demo command for Icp - Iterative Closest point.\n");
 
    if (NrParams < 1) {
@@ -143,9 +147,7 @@ void WEAK CliCmd_DefaultDemo(int NrParams, TCiParams *P)
 
       case 10 : {
          printf("Load IcpTarget from Lidar\n");
-      	Icp.Targets.Clear();
-      	MyLidar.GetPoints(Icp.Targets, 135, 315);
-
+      	Icp.Load();
          printf("Icp.Targets.Count: %d\n", Icp.Targets.Count());
       }
       break;
@@ -161,23 +163,22 @@ void WEAK CliCmd_DefaultDemo(int NrParams, TCiParams *P)
          printf("IcpAllign %d itterations\n", P[1].PInt);
          StopWatchReset();
 
-         Icp.IcpAlign(FindMyCLosestPoint, pose, P[1].PInt);   // ** the works **
+         Icp.Align(P[1].PInt);   // ** the works **
 
          printf("tijd: %d us\n", StopWatchGet());
-         printf("pose %d %d %f\n", pose.X, pose.Y, pose.Angle);
       }
       break;
 
       case 21 : {
          printf("Update position to pose\n");
 
-         pose.X      += Position.X;
-         pose.Y      += Position.Y;
-         pose.Angle  += Position.Angle;
-
-         Position.SetPose(pose);
-         pose -= pose;  // clear pose
-         Position.Print();
+//         pose.X      += Position.X;
+//         pose.Y      += Position.Y;
+//         pose.Angle  += Position.Angle;
+//
+//         Position.SetPose(pose);
+//         pose -= pose;  // clear pose
+//         Position.Print();
       }
       break;
 
