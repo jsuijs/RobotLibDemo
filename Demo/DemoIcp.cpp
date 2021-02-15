@@ -112,8 +112,15 @@ void DefaultDemoSetup()
    for (int y=0; y< 600; y+= 10) IcpReferencePoints.Add(0, y);
 #else
    // world reference based on lines
-   IcpReferenceLines.Add(0, 0, 3600,    0);
-   IcpReferenceLines.Add(0, 0,    0, 1200);
+   IcpReferenceLines.Add(0,    0, 1200,    0);
+   IcpReferenceLines.Add(0,    0,    0, 1200);
+
+//   IcpReferenceLines.Add(3600, 0, 4800,    0);
+//   IcpReferenceLines.Add(3600, 0, 3600, 1200);
+
+   IcpReferenceLines.Add(0, 0, 2500,    0);
+   IcpReferenceLines.Add(2500, 0, 2500, 2500);
+
 #endif
 
 }
