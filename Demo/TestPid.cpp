@@ -90,9 +90,6 @@ void DefaultDemoSetup()
 
    MySetpoint = 1800;
 
-   // temporary
-   CliAddCommands(CliPid, "Pid");
-
 // The presentation module has been depricated.
 // One day, I'll check if this demo requires an alternative.
    //Presentation.Mode = 2;  // continues

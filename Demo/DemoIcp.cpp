@@ -111,15 +111,27 @@ void DefaultDemoSetup()
    for (int x=0; x<1000; x+= 10) IcpReferencePoints.Add(x, 0);
    for (int y=0; y< 600; y+= 10) IcpReferencePoints.Add(0, y);
 #else
-   // world reference based on lines
-   IcpReferenceLines.Add(0,    0, 1200,    0);
-   IcpReferenceLines.Add(0,    0,    0, 1200);
+   if (true) {
+      // world reference based on lines - roborama track
+      IcpReferenceLines.Add(0,       0, 3600,    0);
+      IcpReferenceLines.Add(3600,    0, 3600, 1200);
+      IcpReferenceLines.Add(3600, 1200, 2400, 1200);
+      IcpReferenceLines.Add(2400, 1200, 2400, 2400);
+      IcpReferenceLines.Add(2400, 2400, 1200, 2400);
+      IcpReferenceLines.Add(1200, 2400, 1200, 1200);
+      IcpReferenceLines.Add(1200, 1200,    0, 1200);
+      IcpReferenceLines.Add(   0, 1200,    0,    0);
+   }
 
-//   IcpReferenceLines.Add(3600, 0, 4800,    0);
-//   IcpReferenceLines.Add(3600, 0, 3600, 1200);
-
-   IcpReferenceLines.Add(0, 0, 2500,    0);
-   IcpReferenceLines.Add(2500, 0, 2500, 2500);
+//   // world reference based on lines - roborama track
+//   IcpReferenceLines.Add(0,    -50, 3600,   -50);
+//   IcpReferenceLines.Add(3600,    0, 3600, 1200);
+//   IcpReferenceLines.Add(3600, 1200, 2400, 1200);
+//   IcpReferenceLines.Add(2400, 1200, 2400, 2400);
+//   IcpReferenceLines.Add(2400, 2400, 1200, 2400);
+//   IcpReferenceLines.Add(1250, 2400, 1250, 1200);
+//   IcpReferenceLines.Add(1200, 1200,    0, 1200);
+//   IcpReferenceLines.Add(   0, 1200,    0,    0);
 
 #endif
 
