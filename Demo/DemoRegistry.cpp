@@ -1,7 +1,7 @@
 //-----------------------------------------------------------------------------
 // DemoRegistry.cpp
 //
-// Copyright (c) 2013-2019 Joep Suijs - All rights reserved.
+// Copyright (c) 2013-2021 Joep Suijs - All rights reserved.
 //
 // This demo shows how to use Registry.
 //
@@ -75,20 +75,26 @@ void DefaultDemoSetup()
 
    // Add variable DemoVar1 of type int. Its value is stored in the registry
    // Second parameter is the default (initial) value.
-   Registry.AddInt("Demo-Var1", 0);
+   // Dots in variable names are a 'convention' to group variables,
+   // a bit like namespaces (but not enforced, just text)
+   Registry.AddInt("Demo.Var1", 0);
+
+   // Optional, you can add a helptext. Shown via 'reg help' and may be
+   // linked to command-line help (see DemoCommandLine).
+   Registry.SetHelpText("Demo.Var1", "The first variable of the Demo. group");
 
    // Add variable DemoVar2 of type float. Its value is stored in the registry
    // Second parameter is the default (initial) value.
-   Registry.AddFloat("Demo-Var2", 123.7);
+   Registry.AddFloat("Demo.Var2", 123.7);
 
    // Add variable DemoVar3. Its value is stored in the provided reference.
    // The reference is typically a static or global variable. DO NOT
    // ADD REFERENCES TO AUTO VARIABLES!
    // The variable type (int or float) is based on the reference type.
-   Registry.Add("Demo-Var3", DemoVar3);
+   Registry.Add("Demo.Var3", DemoVar3);
 
    // Add a variable from an existing class:
-   Registry.Add("Demo-Var4", Position.Degrees);
+   Registry.Add("Demo.Var4", Position.Degrees);
 
    // Add integer variable, assign a value, change it, and add a dialog.
    Registry.AddInt(   "simplevar", 200);
