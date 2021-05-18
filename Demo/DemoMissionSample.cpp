@@ -1,7 +1,7 @@
 //-----------------------------------------------------------------------------
 // DemoMissionSample.cpp
 //
-// Copyright (c) 2013-2020 Joep Suijs - All rights reserved.
+// Copyright (c) 2013-2021 Joep Suijs - All rights reserved.
 //
 // A sample - Not realy a Demo, but easy-to-grab code snippets.
 //
@@ -45,7 +45,7 @@
 //-------------
 // DECLARATIONS
 //-------------
-bool MSM_Sample(TMissionHandler *M, int &State, int NewState);
+bool MSM_Sample(TMissionState &M);
 
 //-------------
 // INSTANCES
@@ -87,16 +87,16 @@ void CliCmd_DefaultDemo(int NrParams, TCiParams *P)
 // MSM_Sample - Mission State Machine sample
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
-bool MSM_Sample(TMissionHandler *M, int &State, int NewState)
+bool MSM_Sample(TMissionState &M)
 {
 
    // static vars for the things you need to rembember between calls of the msm.
-   static int    Test;
+   //static int    Test;
    static TPoint Doel;
 
    // Get the relevant numbered mission params & store it in a properly named
    // auto-var
-   int Bonus   = M->ParamGet(0);
+   int Bonus   = M.ParamGet(0);
 
    // auto var's here is a good idea
    int Result;
@@ -108,17 +108,17 @@ bool MSM_Sample(TMissionHandler *M, int &State, int NewState)
    Bonus  = Result;
    // </ignore>
 
-   switch (State) {
+   switch (M.State) {
       case 0 : { // initial state
 
          // Initial action
 
-         State += 10; // immediate to the next state
+         M.State += 10; // immediate to the next state
       }
       break;
 
       case 10 : { // generic sample
-         if (NewState) {
+         if (M.NewState) {
             // OnEntry action
          }
 
@@ -126,7 +126,7 @@ bool MSM_Sample(TMissionHandler *M, int &State, int NewState)
 
          // Condition
          if (1) {                // Condition
-            State += 10;         // To the next state
+            M.State += 10;         // To the next state
          }
          if (Bonus == 17) {      // Condition
             return true;         // signal mission is done.
@@ -135,7 +135,7 @@ bool MSM_Sample(TMissionHandler *M, int &State, int NewState)
       break;
 
       case 20 : { // Mover sample
-         if (NewState) {
+         if (M.NewState) {
             // OnEntry action
             UmXY(100, 100, 300, 0);
          }
@@ -144,30 +144,30 @@ bool MSM_Sample(TMissionHandler *M, int &State, int NewState)
 
          // Condition
          if (Mover.IsDone()) {   // When movement is done
-            State += 10;         // To the next state
+            M.State += 10;         // To the next state
          }
       }
       break;
 
       case 30 : { // Sub-mission sample
-         if (NewState) {
+         if (M.NewState) {
             // OnEntry action
-            M->Sub->ParamSet(0, 17);               // set param 0 to 17
-            M->Sub->Start(FP_FNAME(MSM_Sample)); // start sub-mission
+            M.Sub->ParamSet(0, 17);               // set param 0 to 17
+            M.Sub->Start(FP_FNAME(MSM_Sample)); // start sub-mission
 
          }
 
          // Continues Action
 
          // Condition
-         if (M->Sub->IsDone()) { // When sub-mission is done
-            State += 10;         // To the next state
+         if (M.Sub->IsDone()) { // When sub-mission is done
+            M.State += 10;         // To the next state
          }
       }
       break;
 
       default : { // error (or done?)
-         printf("Default state (%d), ending mission\n", State);
+         printf("Default state (%d), ending mission\n", M.State);
          return true;            // mission end
       }
       break;
