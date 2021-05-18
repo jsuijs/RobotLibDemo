@@ -1,7 +1,7 @@
 //-----------------------------------------------------------------------------
 // DemoAx12.cpp
 //
-// Copyright (c) 2013-2018 Joep Suijs - All rights reserved.
+// Copyright (c) 2013-2021 Joep Suijs - All rights reserved.
 //
 // This demo shows how to use the Ax-12 servo gateway.
 //
@@ -20,7 +20,7 @@
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
-// along with RobotLib.  If not, see <http://www.gnu.org/licenses/>.
+// along with RobotLib. If not, see <http://www.gnu.org/licenses/>.
 //
 // See http://wiki.robotmc.be/index.php?title=RobotLib for more information.
 //-----------------------------------------------------------------------------
@@ -70,8 +70,6 @@ TAx12 Ax12(AX12_GW_DEFAULT_I2C_ADDRESS);
 TServo   Ax12ServoA("Ax12-A", Ax12_ServoSet, 8);   // Ax12 servo A has ID 8
 TServo   Ax12ServoB("Ax12-B", Ax12_ServoSet, 9);   // Ax12 servo B has ID 9
 
-
-
 //-----------------------------------------------------------------------------
 // DefaultDemoSetup -
 //-----------------------------------------------------------------------------
@@ -92,7 +90,7 @@ void DefaultDemoSetup()
    Ax12ServoA.A    = 67;      // / Map 0..300 degrees to native range of Ax12
    Ax12ServoA.B    = 500;     // \ (see example below for more details)
 
-   Ax12ServoA.Angle(90);      // Initial angle
+   Ax12ServoA.Degrees(90);    // Initial angle
 
    // Ax12ServoA.Step = 40;   // ** Do use Step of the servo class, use Ax12.SetSpeed() **
    Ax12.SetSpeed(2,200);      // Set turn speed of Ax12 #2 to 200 (= 200 / 1024 * 114 rpm or 134 deg/sec)
@@ -103,7 +101,7 @@ void DefaultDemoSetup()
    // 2nd Servo,
    Ax12ServoB.A    = -88;     // / A and B map degrees to raw where raw 500 is 0 degrees and
    Ax12ServoB.B    = 2390;    // \ raw 2500 is 300 degrees (1023 in Ax12 domain)
-   Ax12ServoB.Angle(90);
+   Ax12ServoB.Degrees(90);
    Ax12ServoB.Enable(true);
 
 }
