@@ -34,6 +34,7 @@
 // tags_end
 //-----------------------------------------------------------------------------
 #include "RobotLib.h"
+#include "project.h"
 
 #define DEMO_NAME TestSensor
 
@@ -51,11 +52,11 @@ bool MSM_Test(TMissionState &M);
 //-------------
 // INSTANCES
 //-------------
-int *TestSensorValue;   // mandatory value
-int *TestSensorValue1;  // optional value
-int *TestSensorValue2;  // optional value
-int *TestSensorValue3;  // optional value
-int *TestSensorValue4;  // optional value
+TSourceConnector TestSensor;   // mandatory
+TSourceConnector TestSensor1;  // optional
+TSourceConnector TestSensor2;  // optional
+TSourceConnector TestSensor3;  // optional
+TSourceConnector TestSensor4;  // optional
 
 //-----------------------------------------------------------------------------
 // DefaultDemoSetup -
@@ -65,7 +66,8 @@ void DefaultDemoSetup()
 {
    printf("DemoSetup for SensorTest.\n");
    printf("Set TestSensorValue before using Demo command\n");
-//   TestSensorValue = NULL;
+
+//   TestSensor.SetSrc(MyLidar, 0);
 }
 
 //-----------------------------------------------------------------------------
@@ -76,12 +78,8 @@ void CliCmd_DefaultDemo(int NrParams, TCiParams *P)
 {
    printf("Demo/test sensor.\n");
 
-   if (TestSensorValue == NULL) {
-      printf("TestSensorValue needs to be set before using this command, like:\n\n");
-      printf("   extern int *TestSensorValue;\n");
-      printf("   TestSensorValue = &SharpL.Distance;\n");
-      printf("   (see source for more than one sensorvalue)\n\n");
-
+   if (TestSensor.IsDefined() == false) {
+      printf("Source-connector TestSensor needs to be set before using this command.\n");
       return;
    }
 
@@ -100,7 +98,7 @@ void CliCmd_DefaultDemo(int NrParams, TCiParams *P)
 	Mission.ParamSet(1, P[1].PInt);  // stepsize
 	Mission.ParamSet(2, P[2].PInt) ; // # of samples/step
    if (NrParams == 4) {
-   	Mission.ParamSet(3, P[3].PInt) ; // delay
+   	Mission.ParamSet(3, P[3].PInt / MAIN_TAKT_INTERVAL) ; // delay ms -> ticks
    } else {
       Mission.ParamSet(3, 0) ; // delay
    }
@@ -161,17 +159,17 @@ bool MSM_Test(TMissionState &M)
                SampleDelay = 0;
             }
 
-            if (TestSensorValue == NULL) {
-               printf("Error: TestSensorValue is NULL, terminate\n");
+            if (TestSensor.IsDefined() == false) {
+               printf("Error: TestSensor not configured, terminate\n");
                return true;
             }
 
             if (SampleDelay >= Delay) {
-               printf("x / sample: %d %d", StepCounter * StepSize, *TestSensorValue);
-               if (TestSensorValue1 != NULL) printf(" %d", *TestSensorValue1);
-               if (TestSensorValue2 != NULL) printf(" %d", *TestSensorValue2);
-               if (TestSensorValue3 != NULL) printf(" %d", *TestSensorValue3);
-               if (TestSensorValue4 != NULL) printf(" %d", *TestSensorValue4);
+               printf("x / sample: %d %d", StepCounter * StepSize, TestSensor.ReadInt());
+               if (TestSensor1.IsDefined()) printf(" %d", TestSensor1.ReadInt());
+               if (TestSensor2.IsDefined()) printf(" %d", TestSensor2.ReadInt());
+               if (TestSensor3.IsDefined()) printf(" %d", TestSensor3.ReadInt());
+               if (TestSensor4.IsDefined()) printf(" %d", TestSensor4.ReadInt());
                printf("\n");
 
                SampleDelay = 0;
