@@ -67,7 +67,7 @@ void DefaultDemoSetup()
    printf("DemoSetup for SensorTest.\n");
    printf("Set TestSensorValue before using Demo command\n");
 
-//   TestSensor.SetSrc(MyLidar, 0);
+   TestSensor.SetSrc(Icp.SourceLidar, 0);
 }
 
 //-----------------------------------------------------------------------------
